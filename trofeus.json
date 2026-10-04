@@ -1,0 +1,46 @@
+{
+  "trofeus": [
+    {
+      "id": "craft",
+      "nome": "Copa Craft",
+      "imagem": "img/trofeus/craft.png",
+      "peso": 3
+    },
+    {
+      "id": "bola-ouro-craft",
+      "nome": "MVP da Copa Craft",
+      "imagem": "img/trofeus/bola-ouro-craft.png",
+      "peso": 3
+    },
+    {
+      "id": "liga",
+      "nome": "Troféu de liga",
+      "imagem": "img/trofeus/liga.png",
+      "peso": 2
+    },
+    {
+      "id": "bola-ouro-liga",
+      "nome": "MVP da Liga",
+      "imagem": "img/trofeus/bola-ouro-liga.png",
+      "peso": 2
+    },
+    {
+      "id": "medalha",
+      "nome": "Medalha",
+      "imagem": "img/trofeus/medalha.png",
+      "peso": 1
+    },
+    {
+      "id": "pokerogue",
+      "nome": "Campeão do PokéRogue",
+      "imagem": "img/trofeus/pokerogue.png",
+      "peso": 2
+    },
+    {
+      "id": "pokerogue-mvp",
+      "nome": "MVP do PokéRogue",
+      "imagem": "img/trofeus/pokerogue-mvp.png",
+      "peso": 2
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meus campeões Pokémon</title>
+<link rel="icon" href="img/favicon.ico" sizes="48x48">
+<link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+<meta name="theme-color" content="#04122e">
+<meta name="description" content="Registre os times que zeraram suas ligas e copas Pokémon e descubra qual Pokémon você mais usou.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="barra"><a href="#/" class="logo">Meus campeões</a><form id="lupa" class="lupa" autocomplete="off"><button type="button" id="lupa-bt" aria-label="Buscar perfil" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button><input id="lupa-in" type="text" placeholder="Cole o link do perfil" aria-label="Link ou usuário do perfil" tabindex="-1"></form><span id="barra-acoes"></span></nav>
+
+<section id="v-config" hidden><main class="estreito">
+  <h1>Falta configurar</h1>
+  <p>Abra o arquivo <b>config.js</b> e cole a URL e a chave do seu projeto do Supabase. O passo a passo está no README.md.</p>
+  <p id="config-aviso" class="msg"></p>
+</main></section>
+
+<section id="v-entrada" hidden><main class="estreito">
+  <h1>Meus campeões</h1>
+  <p>Registre os times que zeraram suas ligas e copas Pokémon e descubra qual Pokémon você mais usou.</p>
+  <div class="ed-card">
+    <h3>Entrar ou criar conta</h3>
+    <div class="ed-campos"><input id="a-email" type="email" placeholder="E-mail" autocomplete="email"><input id="a-senha" type="password" placeholder="Senha (mínimo 6 caracteres)" autocomplete="current-password"></div>
+    <p><button id="a-entrar" class="ed-btn">Entrar</button> <button id="a-criar" class="link">Criar conta</button> <span id="a-msg"></span></p>
+  </div>
+  <p class="mut">Para ver o perfil de alguém, abra o link que a pessoa te passou.</p>
+</main></section>
+
+<section id="v-criar" hidden><main class="estreito">
+  <h1>Crie seu perfil</h1>
+  <p>Escolha o nome de usuário do seu link. Ele não poderá ser trocado depois.</p>
+  <div class="ed-card">
+    <div class="ed-campos"><input id="c-user" placeholder="nome de usuário (ex.: luan)" autocomplete="off"><input id="c-nome" placeholder="Nome de exibição (opcional)"></div>
+    <p><button id="c-criar" class="ed-btn">Criar perfil</button> <span id="c-msg"></span></p>
+  </div>
+</main></section>
+
+<section id="v-nao" hidden><main class="estreito">
+  <h1>Perfil não encontrado</h1>
+  <p>Confira se o link está certo.</p>
+</main></section>
+
+<div id="v-perfil" hidden>
+  <header class="topo">
+    <div id="cab" class="cab"></div>
+    <div id="conq" class="conq"></div>
+    <div id="stats" class="stats"></div>
+    <nav class="abas">
+      <button data-aba="inicio" aria-selected="true">Início</button>
+      <button data-aba="ranking" aria-selected="false">Ranking</button>
+      <button data-aba="times" aria-selected="false">Times campeões</button>
+      <button data-aba="editar" aria-selected="false" hidden>Adicionar</button>
+      <button data-aba="seguindo" aria-selected="false" hidden>Seguindo</button>
+    </nav>
+  </header>
+  <main>
+    <section id="inicio-secao">
+      <div id="dest-bloco">
+        <section class="dest">
+          <div class="dest-topo"><span class="estrela">★</span><h3>Time de destaque</h3><span id="d-tr"></span><b id="d-nome"></b><select id="d-sel" aria-label="Trocar time de destaque" hidden></select></div>
+          <div class="time" id="d-time"></div>
+          <p id="d-msg" class="mut"></p>
+        </section>
+        <div class="sec-t"><h3>Top 3 do ranking</h3><button id="d-rank" class="link">Ver ranking completo</button></div>
+        <div class="top3" id="top3"></div>
+      </div>
+      <div id="vazio" class="vazio" hidden>
+        <img id="vazio-img" alt="" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png">
+        <b>Nenhum campeão ainda</b>
+        <p id="vazio-txt"></p>
+        <button id="vazio-bt" class="ed-btn" hidden>Adicionar meu primeiro time</button>
+      </div>
+    </section>
+    <section id="ranking-secao" hidden>
+      <div class="filtros">
+        <input id="busca" type="search" placeholder="Buscar por nome ou apelido" aria-label="Buscar">
+        <select id="f-jogo" aria-label="Jogo"><option value="">Todos os jogos</option></select>
+        <select id="f-tipo" aria-label="Tipo"><option value="">Todos os tipos</option></select>
+        <div id="f-trofeus" class="chips"></div>
+      </div>
+      <details class="legenda"><summary>Como funciona a pontuação</summary>
+        <p>Cada título vale pontos conforme o troféu. O ranking soma os pontos de cada Pokémon e, se houver empate, aparece primeiro quem tem mais títulos.</p>
+        <ul id="legenda-lista"></ul>
+      </details>
+      <p id="contagem"></p>
+      <ol id="ranking"></ol>
+      <p class="centro"><button id="mais" hidden></button> <button id="limpar" hidden>Limpar filtros</button></p>
+    </section>
+    <section id="times-secao" hidden>
+      <div id="linha-tempo"></div>
+      <div id="palco"></div>
+    </section>
+    <section id="editar-secao" hidden>
+      <div class="ed-card">
+        <h3 id="ed-titulo">Novo time campeão</h3>
+        <div class="ed-campos"><select id="ed-trofeu" aria-label="Competição"></select><span id="ed-extra" class="ed-extra"></span></div>
+        <div id="ed-time"></div>
+        <p><button id="ed-salvar" class="ed-btn">Salvar time</button> <button id="ed-cancelar" class="link" hidden>Cancelar edição</button> <span id="ed-msg"></span></p>
+      </div>
+      <div class="ed-card">
+        <h3>Backup</h3>
+        <p class="mut">Baixe seus dados em um arquivo .json ou importe um arquivo (por exemplo, o dados.json antigo do projeto). Times com o mesmo nome não são duplicados.</p>
+        <button id="ed-baixar" class="ed-btn">Baixar meus dados</button>
+        <label class="link">Importar arquivo .json <input id="imp-arq" type="file" accept=".json,application/json" hidden></label>
+        <span id="imp-msg"></span>
+      </div>
+    </section>
+    <section id="seguindo-secao" hidden>
+      <ul id="seg-lista"></ul>
+      <p id="seg-vazio" class="mut">Você ainda não segue ninguém. Para achar alguém, peça o link do perfil da pessoa.</p>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg-cartao">
+  <h3>Cartão do perfil</h3>
+  <canvas id="cartao-cv" width="1080" height="1350"></canvas>
+  <p><button id="cartao-baixar" class="ed-btn">Baixar imagem</button> <button id="cartao-fechar" class="link">Fechar</button> <span id="cartao-msg"></span></p>
+</dialog>
+<datalist id="lista-pokemon"></datalist>
+<dialog id="perfil"></dialog>
+<dialog id="dlg-conta">
+  <h3>Editar perfil</h3>
+  <p><input id="k-nome" placeholder="Nome de exibição"></p>
+  <p class="mut">Foto de perfil. Escolha a imagem e ajuste o enquadramento.</p>
+  <p><input id="k-foto" type="file" accept="image/*"></p>
+  <div id="k-corte" hidden><canvas id="k-canvas" width="256" height="256"></canvas><p class="mut">Arraste a foto para posicionar e use o controle para aproximar.</p><input id="k-zoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"></div>
+  <p><button id="k-salvar" class="ed-btn">Salvar</button> <button id="k-fechar" class="link">Cancelar</button> <span id="k-msg"></span></p>
+</dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
