@@ -69,16 +69,20 @@ create policy "fotos: enviar" on storage.objects for insert to authenticated wit
 create policy "fotos: trocar" on storage.objects for update to authenticated using (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
 create policy "fotos: apagar" on storage.objects for delete to authenticated using (bucket_id = 'fotos' and (storage.foldername(name))[1] = auth.uid()::text);
 
+-- Colunas extras de perfis: time de destaque e selo de beta tester.
+-- Selo: quem cria o perfil enquanto o padrao for true recebe o selo. Quando a beta acabar, rode:
+--   alter table perfis alter column beta set default false;
+alter table perfis add column if not exists destaque text;
+alter table perfis add column if not exists beta boolean not null default true;
+
 -- Permissões da API (obrigatório em projetos criados depois de 30/05/2026:
 -- tabelas novas não ficam liberadas automaticamente para o site).
 -- Visitantes (anon) só leem; quem está logado (authenticated) também escreve, e as regras acima limitam ao próprio dono.
 grant usage on schema public to anon, authenticated;
 grant select on public.perfis, public.jogos, public.individuais to anon, authenticated;
-grant insert, update on public.perfis to authenticated;
+-- perfis: o site só pode gravar estas colunas (a coluna beta nunca é editada pelo site)
+grant insert (id, username, nome) on public.perfis to authenticated;
+grant update (nome, foto_url, destaque) on public.perfis to authenticated;
 grant insert, update, delete on public.jogos, public.individuais to authenticated;
 grant select, insert, delete on public.seguindo to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
-
-
--- Time de destaque do perfil (rode este bloco se o projeto ja existia)
-alter table perfis add column if not exists destaque text;

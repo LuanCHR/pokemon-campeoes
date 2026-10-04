@@ -345,59 +345,103 @@ async function cartao() {
   const dlg = $('#dlg-cartao'), cv = $('#cartao-cv'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
   $('#cartao-msg').textContent = '';
   dlg.showModal();
-  try { await Promise.all([document.fonts.load('700 56px Silkscreen'), document.fonts.load('800 36px Nunito')]); } catch {}
+  try { await Promise.all([document.fonts.load('700 60px Silkscreen'), document.fonts.load('800 30px Nunito')]); } catch {}
   const carregar = src => new Promise(ok => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => ok(i); i.onerror = () => ok(null); i.src = src; });
-  const top = P.slice(0, 3), tros = D.trofeus.map(t => ({ t, n: totalTro(t) })).filter(x => x.n).sort((a, b) => (b.t.peso || 1) - (a.t.peso || 1)).slice(0, 4);
-  const [foto, tipos, spr, imgsT] = await Promise.all([
+  const jogo = D.jogos.find(x => x.nome === ALVO.destaque) || D.jogos[0];
+  const ids = jogo ? jogo.time.slice(0, 6) : P.slice(0, 6).map(p => p.id);
+  const mvpId = jogo ? mvpDe(jogo) : null;
+  const tros = D.trofeus.map(t => ({ t, n: totalTro(t) })).filter(x => x.n).sort((a, b) => (b.t.peso || 1) - (a.t.peso || 1)).slice(0, 5);
+  const trJogo = jogo ? D.trofeus.find(t => t.id === jogo.trofeu) : null;
+  const [foto, tipos, artes, imgsT, bt, coroa, imTrJogo] = await Promise.all([
     ALVO.foto_url ? carregar(ALVO.foto_url) : null,
     tiposTop(2),
-    Promise.all(top.map(p => carregar(SPRITE(p.id)))),
-    Promise.all(tros.map(x => carregar(x.t.imagem)))
+    Promise.all(ids.map(async id => (await carregar(ARTE(id))) || (await carregar(SPRITE(id))))),
+    Promise.all(tros.map(x => carregar(x.t.imagem))),
+    ALVO.beta ? carregar('img/beta.png') : null,
+    carregar('img/mvp.png'),
+    trJogo ? carregar(trJogo.imagem) : null
   ]);
+  const rr = (x, y, w, h, r, fill, stroke, lw) => {
+    g.beginPath(); g.roundRect(x, y, w, h, r);
+    if (fill) { g.fillStyle = fill; g.fill(); }
+    if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 2; g.stroke(); }
+  };
   const contain = (im, x, y, w, h) => { const r = Math.min(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * r) / 2, y + (h - im.height * r) / 2, im.width * r, im.height * r); };
+  const rotulo = (txt, x, y, alinha) => { g.textAlign = alinha || 'left'; g.fillStyle = '#8fb8e3'; g.font = '800 24px Nunito, sans-serif'; try { g.letterSpacing = '4px'; } catch {} g.fillText(txt.toUpperCase(), x, y); try { g.letterSpacing = '0px'; } catch {} };
   g.clearRect(0, 0, W, H);
-  let gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#0D47A1'); gr.addColorStop(1, '#04122e');
+  // fundo: azul liso com uma luz suave e grade de pontos
+  let gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#0b2d6b'); gr.addColorStop(0.55, '#071f4a'); gr.addColorStop(1, '#04122e');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  gr = g.createRadialGradient(W / 2, 0, 0, W / 2, 0, 760); gr.addColorStop(0, '#2196F3cc'); gr.addColorStop(1, '#2196F300');
+  gr = g.createRadialGradient(180, 120, 0, 180, 120, 620); gr.addColorStop(0, '#2196F340'); gr.addColorStop(1, '#2196F300');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
-  g.strokeStyle = '#90CAF9'; g.lineWidth = 6; g.beginPath(); g.roundRect(24, 24, W - 48, H - 48, 48); g.stroke();
-  g.textAlign = 'center';
-  // avatar
-  const ax = W / 2, ay = 250, ar = 130;
+  g.fillStyle = '#90CAF90d';
+  for (let x = 40; x < W; x += 40) for (let y = 40; y < H; y += 40) g.fillRect(x, y, 3, 3);
+  // topo
+  g.textAlign = 'left'; g.fillStyle = '#90CAF9'; g.font = '700 26px Silkscreen, monospace'; g.fillText('MEUS CAMPEÕES', 72, 96);
+  g.fillStyle = '#90CAF933'; g.fillRect(72, 118, W - 144, 2);
+  // perfil
+  const ax = 72 + 90, ay = 262, ar = 90;
   g.save(); g.beginPath(); g.arc(ax, ay, ar, 0, Math.PI * 2); g.clip();
   if (foto) { const m = Math.min(foto.width, foto.height); g.drawImage(foto, (foto.width - m) / 2, (foto.height - m) / 2, m, m, ax - ar, ay - ar, ar * 2, ar * 2); }
-  else { gr = g.createLinearGradient(0, ay - ar, 0, ay + ar); gr.addColorStop(0, '#2196F3'); gr.addColorStop(1, '#0D47A1'); g.fillStyle = gr; g.fillRect(ax - ar, ay - ar, ar * 2, ar * 2); g.fillStyle = '#E3F2FD'; g.font = '700 110px Silkscreen, monospace'; g.fillText((ALVO.nome || ALVO.username)[0].toUpperCase(), ax, ay + 38); }
+  else { g.fillStyle = '#1565C0'; g.fillRect(ax - ar, ay - ar, ar * 2, ar * 2); g.fillStyle = '#E3F2FD'; g.font = '700 80px Silkscreen, monospace'; g.textAlign = 'center'; g.fillText((ALVO.nome || ALVO.username)[0].toUpperCase(), ax, ay + 28); }
   g.restore();
-  g.strokeStyle = '#90CAF9'; g.lineWidth = 8; g.beginPath(); g.arc(ax, ay, ar, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = '#fff'; g.font = '700 64px Silkscreen, monospace'; g.fillText(ALVO.nome || ALVO.username, W / 2, 470, 900);
-  g.fillStyle = '#8fb8e3'; g.font = '800 34px Nunito, sans-serif'; g.fillText('@' + ALVO.username, W / 2, 522);
-  // top 3
-  g.imageSmoothingEnabled = false;
-  top.forEach((p, i) => {
-    const x = W / 2 + (i - 1) * 310;
-    g.fillStyle = '#ffffff14'; g.beginPath(); g.roundRect(x - 130, 580, 260, 300, 30); g.fill();
-    if (spr[i]) g.drawImage(spr[i], x - 105, 595, 210, 210);
-    g.fillStyle = '#fff'; g.font = '800 32px Nunito, sans-serif'; g.fillText(p.nome, x, 850, 240);
+  g.strokeStyle = '#90CAF9'; g.lineWidth = 6; g.beginPath(); g.arc(ax, ay, ar, 0, Math.PI * 2); g.stroke();
+  const nome = ALVO.nome || ALVO.username, nx = ax + ar + 36, maxN = W - nx - 72 - (bt ? 76 : 0);
+  let fs = 64; g.textAlign = 'left';
+  do { g.font = `700 ${fs}px Silkscreen, monospace`; fs -= 2; } while (g.measureText(nome).width > maxN && fs > 24);
+  g.fillStyle = '#fff'; g.fillText(nome, nx, ay - 6);
+  if (bt) contain(bt, nx + g.measureText(nome).width + 16, ay - 6 - 54, 60, 60);
+  g.fillStyle = '#8fb8e3'; g.font = '800 32px Nunito, sans-serif'; g.fillText('@' + ALVO.username, nx, ay + 40);
+  // time de destaque
+  rotulo(jogo ? 'Time de destaque' : 'Mais campeões', 72, 440);
+  if (jogo) {
+    g.textAlign = 'right'; g.fillStyle = '#fff'; g.font = '800 30px Nunito, sans-serif';
+    const lw = g.measureText(jogo.nome).width;
+    g.fillText(jogo.nome, W - 72 - (imTrJogo ? 52 : 0), 440, 560);
+    if (imTrJogo) contain(imTrJogo, W - 72 - 44, 402, 44, 50);
+  }
+  const pw = 148, gap = 12, x0 = (W - (pw * 6 + gap * 5)) / 2;
+  ids.forEach((id, i) => {
+    const x = x0 + i * (pw + gap), y = 470, mvp = id === mvpId;
+    rr(x, y, pw, 232, 20, '#ffffff0f', mvp ? '#f5c542' : '#90CAF933', mvp ? 3 : 2);
+    if (artes[i]) contain(artes[i], x + 8, y + 22, pw - 16, pw - 16);
+    if (mvp && coroa) contain(coroa, x + pw / 2 - 22, y - 18, 44, 44);
+    const ap = jogo && (jogo.apelidos || {})[id], p = M[id];
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '800 22px Nunito, sans-serif';
+    g.fillText(ap || (p ? p.nome : nomeDe(id)), x + pw / 2, y + 196, pw - 14);
+    if (ap && p) { g.fillStyle = '#8fb8e3'; g.font = '700 17px Nunito, sans-serif'; g.fillText(p.nome, x + pw / 2, y + 218, pw - 14); }
   });
-  g.imageSmoothingEnabled = true;
-  g.fillStyle = '#E3F2FD'; g.font = '800 38px Nunito, sans-serif';
-  g.fillText(`${D.jogos.length} ${D.jogos.length === 1 ? 'time campeão' : 'times campeões'} · ${P.length} Pokémon`, W / 2, 960);
+  // números
+  const tit = D.trofeus.reduce((s, t) => s + totalTro(t), 0);
+  [[D.jogos.length, D.jogos.length === 1 ? 'time campeão' : 'times campeões'], [P.length, 'Pokémon usados'], [tit, tit === 1 ? 'título' : 'títulos']].forEach(([n, l], i) => {
+    const cx = 72 + (W - 144) / 6 + i * (W - 144) / 3;
+    g.textAlign = 'center'; g.fillStyle = '#E3F2FD'; g.font = '800 84px Nunito, sans-serif'; g.fillText(String(n), cx, 830);
+    g.fillStyle = '#8fb8e3'; g.font = '700 26px Nunito, sans-serif'; g.fillText(l, cx, 870);
+    if (i) { g.fillStyle = '#90CAF933'; g.fillRect(72 + i * (W - 144) / 3, 770, 2, 120); }
+  });
   // tipos
-  g.font = '800 34px Nunito, sans-serif';
-  const larg = tipos.map(([t]) => g.measureText((TIPOS[t] || [t])[0]).width + 64), tot = larg.reduce((a, b) => a + b, 0) + 20 * Math.max(0, tipos.length - 1);
-  let x0 = (W - tot) / 2;
-  tipos.forEach(([t], i) => {
-    g.fillStyle = (TIPOS[t] || [0, '#777'])[1]; g.beginPath(); g.roundRect(x0, 995, larg[i], 64, 32); g.fill();
-    g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText((TIPOS[t] || [t])[0], x0 + larg[i] / 2, 1038); x0 += larg[i] + 20;
+  rotulo('Tipos mais usados', 72, 970);
+  g.font = '800 30px Nunito, sans-serif';
+  let tx = 72;
+  tipos.forEach(([t]) => {
+    const nm = (TIPOS[t] || [t])[0], w = g.measureText(nm).width + 56;
+    rr(tx, 992, w, 58, 14, (TIPOS[t] || [0, '#777'])[1]);
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(nm, tx + w / 2, 1031); tx += w + 14;
   });
   // troféus
-  const item = 190, ini = (W - item * tros.length) / 2;
-  tros.forEach((x, i) => {
-    if (imgsT[i]) contain(imgsT[i], ini + i * item, 1100, 90, 100);
-    g.fillStyle = '#90CAF9'; g.font = '700 44px Silkscreen, monospace'; g.textAlign = 'left'; g.fillText(x.n, ini + i * item + 96, 1165);
-  });
-  g.textAlign = 'center'; g.fillStyle = '#8fb8e3'; g.font = '700 28px Nunito, sans-serif';
-  g.fillText(location.href.split('#')[0].replace(/^https?:\/\//, '').replace(/index\.html$/, '') + '#/u/' + ALVO.username, W / 2, 1290, 960);
+  if (tros.length) {
+    rotulo('Troféus', 72, 1110);
+    const item = (W - 144) / tros.length;
+    tros.forEach((x, i) => {
+      const bx = 72 + i * item;
+      if (imgsT[i]) contain(imgsT[i], bx, 1130, 70, 86);
+      g.textAlign = 'left'; g.fillStyle = '#E3F2FD'; g.font = '800 44px Nunito, sans-serif'; g.fillText(String(x.n), bx + 80, 1188);
+    });
+  }
+  // rodapé
+  g.fillStyle = '#90CAF933'; g.fillRect(72, 1252, W - 144, 2);
+  g.textAlign = 'left'; g.fillStyle = '#8fb8e3'; g.font = '700 26px Nunito, sans-serif';
+  g.fillText(location.href.split('#')[0].replace(/^https?:\/\//, '').replace(/index\.html$/, '') + '#/u/' + ALVO.username, 72, 1302, W - 144);
 }
 
 function iniciarExtras() {
@@ -750,6 +794,14 @@ let sb = null, TROFEUS = [], USER = null, MEU = null, ALVO = null, SEGUINDO = ne
 const dono = () => !!(USER && ALVO && USER.id === ALVO.id);
 const ver = id => ['v-config', 'v-entrada', 'v-criar', 'v-nao', 'v-perfil'].forEach(v => { $('#' + v).hidden = v !== id; });
 
+function selo() {
+  const b = el('span', 'selo'), im = new Image();
+  b.dataset.nome = 'Beta tester'; b.tabIndex = 0; b.title = 'Beta tester';
+  im.src = 'img/beta.png'; im.alt = 'Beta tester';
+  b.append(im);
+  return b;
+}
+
 function avatar(p, pequeno) {
   const a = el('span', 'avatar' + (pequeno ? ' p' : ''));
   if (p.foto_url) { const im = new Image(); im.src = p.foto_url; im.alt = ''; a.append(im); }
@@ -785,7 +837,9 @@ function botaoSeguir() {
 function cabecalho() {
   const c = $('#cab'), tx = el('div'), ac = el('div', 'cab-acoes'), link = el('button', null, 'Copiar link');
   c.replaceChildren();
-  tx.append(el('h1', null, ALVO.nome || ALVO.username), el('p', null, '@' + ALVO.username));
+  const h1 = el('h1', null, ALVO.nome || ALVO.username);
+  if (ALVO.beta) h1.append(selo());
+  tx.append(h1, el('p', null, '@' + ALVO.username));
   link.onclick = () => navigator.clipboard.writeText(location.href.split('#')[0] + '#/u/' + ALVO.username).then(() => { link.textContent = 'Link copiado'; setTimeout(() => { link.textContent = 'Copiar link'; }, 1500); });
   const cb = el('button', null, 'Compartilhar cartão'); cb.onclick = cartao;
   ac.append(link, cb);
@@ -799,11 +853,13 @@ async function listarSeguindo() {
   ul.replaceChildren();
   $('#seg-vazio').hidden = ids.length > 0;
   if (!ids.length) return;
-  const { data } = await sb.from('perfis').select('id,username,nome,foto_url').in('id', ids);
+  const { data } = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
   (data || []).forEach(p => {
     const li = el('li'), a = el('a');
     a.href = '#/u/' + p.username;
-    a.append(avatar(p, true), el('span', null, `${p.nome || p.username} (@${p.username})`));
+    const nm = el('span', null, `${p.nome || p.username} (@${p.username})`);
+    if (p.beta) nm.append(selo());
+    a.append(avatar(p, true), nm);
     li.append(a);
     ul.append(li);
   });

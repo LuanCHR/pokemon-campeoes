@@ -277,3 +277,40 @@ dialog input:not([type=file]){font:inherit;padding:9px 12px;border:1px solid var
 #dlg-senha{width:min(400px,calc(100% - 24px))}
 #ns-msg,#a-msg{color:var(--realce);font-size:14px}
 .slot .nm{text-align:left}
+
+/* selo de beta tester */
+.selo{position:relative;display:inline-flex;vertical-align:middle;margin-left:8px;cursor:help;outline:none}
+.selo img{width:24px;height:24px;display:block;transition:transform .2s}
+.cab h1 .selo img{width:34px;height:34px}
+.selo:hover img,.selo:focus img{transform:scale(1.12) rotate(-4deg)}
+.selo:hover::after,.selo:focus::after{content:attr(data-nome);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);white-space:nowrap;background:#E3F2FD;color:#04122e;font:700 13px Nunito,sans-serif;padding:4px 8px;border-radius:6px;z-index:9}
+#seg-lista .selo img{width:20px;height:20px}
+
+/* polimento: menos brilho e vidro, mais superfície lisa */
+body{background:linear-gradient(180deg,#0a2a63 0,#061a3d 460px,#04122e 100%) no-repeat,#04122e;background-attachment:scroll}
+:root{--card:#0a2250;--linha:#1d3f7c}
+.stat,.linha,.ed-card,.chip,.legenda,.membro,.slot,.top3 .c,.dex,.tile{backdrop-filter:none;-webkit-backdrop-filter:none}
+.stat,.linha,.ed-card,.legenda,.membro,.slot,.top3 .c{background:var(--card);border-radius:12px}
+.ouro,.prata,.bronze{box-shadow:none;border-width:2px}
+.ouro::after,.prata::after,.bronze::after{display:none}
+.dest{background:var(--card);border:1px solid var(--linha);box-shadow:none;border-radius:14px}
+.dest-topo .estrela{display:none}
+.dest-topo h3{color:#f5d36b}
+.top3 .c.o{box-shadow:none}
+.abas{gap:2px;border-bottom:1px solid var(--linha);margin-bottom:16px}
+.abas button{background:none;border:0;border-bottom:3px solid transparent;border-radius:0;padding:10px 16px;margin-bottom:-1px;box-shadow:none;color:var(--mut)}
+.abas button:hover{color:var(--ink);border-color:transparent;border-bottom-color:var(--linha)}
+.abas [aria-selected=true]{background:none;color:#fff;border-bottom-color:var(--azul);box-shadow:none}
+.cab-acoes button{border-radius:8px;background:var(--card);padding:8px 16px}
+#barra-acoes .bt{border-radius:10px;background:var(--card);box-shadow:none}
+#barra-acoes .bt:hover{background:#12336e;box-shadow:none;transform:none}
+.chip[aria-pressed=true]{background:var(--azul);box-shadow:none}
+.stat strong{font:800 28px Nunito,sans-serif}
+.stat.destaque strong{font-size:18px}
+.pos{font:800 13px/30px Nunito,sans-serif}
+.sec-t h3,.dex-topo h4,.ed-card h3,.legenda summary{font:800 13px Nunito,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.dest-topo h3{font:800 13px Nunito,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.cab h1{text-shadow:none}
+.dest .membro:hover,.linha:hover{box-shadow:none;transform:translateY(-3px)}
+.tile:hover{transform:none}
+.ed-btn{border-radius:10px}
