@@ -317,3 +317,71 @@ body{background:linear-gradient(180deg,#0a2a63 0,#061a3d 460px,#04122e 100%) no-
 
 /* botões do cabeçalho do perfil voltam a ser cápsulas */
 .cab-acoes button{border-radius:999px;padding:8px 20px}
+
+/* selo menor, no tamanho do verificado de redes sociais */
+.selo{margin-left:6px;position:relative;top:-2px}
+.selo img{width:16px;height:16px}
+.cab h1 .selo img{width:22px;height:22px}
+#seg-lista .selo img{width:16px;height:16px}
+
+/* foto de perfil sem borda azul */
+.avatar{border:0}
+.avatar.p{border:0}
+/* números dos troféus legíveis */
+.conq b{font:800 16px Nunito,sans-serif}
+/* aba estatísticas */
+.est-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.est-card{background:var(--card);border:1px solid var(--linha);border-radius:12px;padding:18px}
+.est-card.larga{grid-column:1/-1}
+.est-card h3{font:800 13px Nunito,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--realce);margin-bottom:12px}
+.barras{display:grid;gap:6px}
+.gbar{display:grid;grid-template-columns:150px 1fr 64px;gap:10px;align-items:center;padding:2px 4px;border-radius:8px}
+.gbar.clicavel{cursor:pointer}
+.gbar.clicavel:hover{background:#ffffff0d}
+.b-rot{display:flex;align-items:center;gap:6px;font-weight:800;font-size:14px;min-width:0}
+.b-rot img{width:36px;height:36px;image-rendering:pixelated;flex:none}
+.b-rot span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.b-trilho{height:12px;border-radius:6px;background:#ffffff14;overflow:hidden}
+.b-fill{display:block;height:100%;width:0;border-radius:6px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.b-val{text-align:right;font-size:13px;color:var(--mut);font-weight:700}
+.colecao-topo{margin-bottom:12px}
+.colecao-topo strong{font:800 36px Nunito,sans-serif;color:#fff}
+.colecao-topo span{color:var(--mut)}
+@media(max-width:560px){.est-grade{grid-template-columns:1fr}.gbar{grid-template-columns:120px 1fr 52px}}
+
+/* legenda da pontuação */
+.legenda p{margin:10px 0 12px}
+#legenda-lista{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;margin-bottom:6px}
+#legenda-lista li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:8px 14px;border:1px solid var(--linha);border-radius:10px;background:#ffffff08}
+#legenda-lista .tro{width:34px;height:34px;display:flex;align-items:center;justify-content:center}
+#legenda-lista .tro img{height:32px;width:auto;max-width:34px}
+#legenda-lista .l-nome{font-weight:700;line-height:1.2}
+#legenda-lista strong{margin:0;white-space:nowrap;color:var(--realce);font-size:14px}
+
+/* entrar, criar conta e criar perfil */
+.auth{max-width:440px;margin:0 auto;padding:36px 20px 60px}
+.auth-topo{text-align:center;margin-bottom:22px}
+.auth-topo h1{font-size:clamp(26px,7vw,38px);margin-bottom:8px}
+.auth-topo p{color:var(--mut);margin:0 auto;max-width:34ch}
+.auth-logo{width:72px;height:72px;margin-bottom:12px;border-radius:16px}
+.auth-card{display:grid;gap:14px;background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:22px}
+.auth-card label{display:grid;gap:6px;font-weight:800;font-size:14px;color:var(--ink)}
+.auth-card input{width:100%;font:inherit;font-weight:400;padding:11px 14px;border:1px solid var(--linha);border-radius:10px;background:var(--campo);color:var(--ink)}
+.auth-card input:focus{outline:none;border-color:var(--realce);box-shadow:0 0 0 3px #2196F344}
+.auth-abas{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--linha);margin:-6px 0 4px}
+.auth-abas button{font:800 15px Nunito,sans-serif;background:none;border:0;border-bottom:3px solid transparent;color:var(--mut);padding:10px;margin-bottom:-1px;cursor:pointer}
+.auth-abas button:hover{color:var(--ink)}
+.auth-abas [aria-selected=true]{color:#fff;border-bottom-color:var(--azul)}
+.senha{position:relative;display:block}
+.senha input{padding-right:84px}
+.senha button{position:absolute;right:6px;top:50%;transform:translateY(-50%);font:800 13px Nunito,sans-serif;color:var(--realce);background:none;border:0;padding:6px 10px;cursor:pointer}
+.auth-dica{margin:-6px 0 0;font-size:13px;color:var(--mut)}
+.auth-esqueci{justify-self:end;margin-top:-6px;padding:0!important;font-size:13px!important}
+.ed-btn.grande{width:100%;padding:12px 20px;font-size:16px}
+.ed-btn:disabled{opacity:.6;cursor:wait}
+.auth-msg{margin:0;font-size:14px;min-height:0;color:var(--realce)}
+.auth-msg:empty{display:none}
+.auth-msg.erro{color:var(--red)}
+.auth-msg.ok{color:#7ee0a0}
+.auth-rodape{text-align:center;margin-top:18px}
+.auth-link{margin:-6px 0 0;font-size:13px;color:var(--mut);word-break:break-all}

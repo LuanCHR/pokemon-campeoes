@@ -23,25 +23,50 @@
   <p id="config-aviso" class="msg"></p>
 </main></section>
 
-<section id="v-entrada" hidden><main class="estreito">
-  <h1>Meus campeões</h1>
-  <p>Registre os times que zeraram suas ligas e copas Pokémon e descubra qual Pokémon você mais usou.</p>
-  <div class="ed-card">
-    <h3>Entrar ou criar conta</h3>
-    <div class="ed-campos"><input id="a-email" type="email" placeholder="E-mail" autocomplete="email"><input id="a-senha" type="password" placeholder="Senha (mínimo 6 caracteres)" autocomplete="current-password"></div>
-    <p><button id="a-entrar" class="ed-btn">Entrar</button> <button id="a-criar" class="link">Criar conta</button> <button id="a-esqueci" class="link">Esqueci minha senha</button></p>
-    <p id="a-msg"></p>
+<section id="v-entrada" hidden><main class="auth">
+  <div class="auth-topo">
+    <img class="auth-logo" src="img/icon-192.png" alt="">
+    <h1>Meus campeões</h1>
+    <p>Registre os times que zeraram suas ligas e copas Pokémon e descubra qual Pokémon você mais usou.</p>
   </div>
-  <p class="mut">Para ver o perfil de alguém, abra o link que a pessoa te passou.</p>
+  <form id="auth-form" class="auth-card" novalidate>
+    <div class="auth-abas" role="tablist">
+      <button type="button" id="ab-entrar" role="tab" aria-selected="true">Entrar</button>
+      <button type="button" id="ab-criar" role="tab" aria-selected="false">Criar conta</button>
+    </div>
+    <label>E-mail
+      <input id="a-email" type="email" inputmode="email" autocomplete="email" placeholder="voce@exemplo.com">
+    </label>
+    <label>Senha
+      <span class="senha">
+        <input id="a-senha" type="password" autocomplete="current-password" placeholder="Sua senha">
+        <button type="button" id="a-ver" aria-label="Mostrar senha">Mostrar</button>
+      </span>
+    </label>
+    <p id="a-dica" class="auth-dica" hidden>Use pelo menos 6 caracteres.</p>
+    <button type="button" id="a-esqueci" class="link auth-esqueci">Esqueci minha senha</button>
+    <button type="submit" id="a-enviar" class="ed-btn grande">Entrar</button>
+    <p id="a-msg" class="auth-msg" role="status"></p>
+  </form>
+  <p class="mut auth-rodape">Para ver o perfil de alguém, abra o link que a pessoa te passou.</p>
 </main></section>
 
-<section id="v-criar" hidden><main class="estreito">
-  <h1>Crie seu perfil</h1>
-  <p>Escolha o nome de usuário do seu link. Ele não poderá ser trocado depois.</p>
-  <div class="ed-card">
-    <div class="ed-campos"><input id="c-user" placeholder="nome de usuário (ex.: luan)" autocomplete="off"><input id="c-nome" placeholder="Nome de exibição (opcional)"></div>
-    <p><button id="c-criar" class="ed-btn">Criar perfil</button> <span id="c-msg"></span></p>
+<section id="v-criar" hidden><main class="auth">
+  <div class="auth-topo">
+    <h1>Crie seu perfil</h1>
+    <p>Escolha o nome de usuário do seu link. Ele não poderá ser trocado depois.</p>
   </div>
+  <form id="criar-form" class="auth-card" novalidate>
+    <label>Nome de usuário
+      <input id="c-user" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="20" placeholder="ex.: luan">
+    </label>
+    <p id="c-previa" class="auth-link"></p>
+    <label>Nome de exibição <span class="mut">(opcional)</span>
+      <input id="c-nome" maxlength="30" placeholder="Como você quer aparecer">
+    </label>
+    <button type="submit" id="c-criar" class="ed-btn grande">Criar perfil</button>
+    <p id="c-msg" class="auth-msg" role="status"></p>
+  </form>
 </main></section>
 
 <section id="v-nao" hidden><main class="estreito">
@@ -57,6 +82,7 @@
     <nav class="abas">
       <button data-aba="inicio" aria-selected="true">Início</button>
       <button data-aba="ranking" aria-selected="false">Ranking</button>
+      <button data-aba="estatisticas" aria-selected="false">Estatísticas</button>
       <button data-aba="times" aria-selected="false">Times campeões</button>
       <button data-aba="editar" aria-selected="false" hidden>Adicionar</button>
       <button data-aba="seguindo" aria-selected="false" hidden>Seguindo</button>
@@ -94,6 +120,9 @@
       <p id="contagem"></p>
       <ol id="ranking"></ol>
       <p class="centro"><button id="mais" hidden></button> <button id="limpar" hidden>Limpar filtros</button></p>
+    </section>
+    <section id="estatisticas-secao" hidden>
+      <div id="est-box" class="est-grade"></div>
     </section>
     <section id="times-secao" hidden>
       <div id="linha-tempo"></div>

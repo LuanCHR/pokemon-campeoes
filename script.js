@@ -201,6 +201,15 @@ function filtros() {
   $('#perfil').onclick = e => { if (e.target === $('#perfil')) $('#perfil').close(); };
 }
 
+function filtrarTipo(tipo) {
+  est = { q: '', tro: new Set(), jogo: '', tipo, todos: false };
+  $('#busca').value = ''; $('#f-jogo').value = ''; $('#f-tipo').value = tipo;
+  document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', 'false'));
+  desenhar();
+  aba('ranking');
+  $('#ranking-secao').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function render(dados) {
   D = dados; M = {};
   const c = contar(D);
@@ -250,6 +259,10 @@ function estatisticas() {
       const s = el('div', 'stat destaque'), t = el('div');
       t.append(tipoChip(tipo), el('span', null, `${i + 1}º tipo mais usado: ${n} ${n === 1 ? 'vez' : 'vezes'}`));
       s.append(t);
+      s.tabIndex = 0;
+      s.title = `Ver os Pokémon do tipo ${(TIPOS[tipo] || [tipo])[0]} no ranking`;
+      s.onclick = () => filtrarTipo(tipo);
+      s.onkeydown = e => { if (e.key === 'Enter') filtrarTipo(tipo); };
       box.append(s);
     });
   });
@@ -342,7 +355,9 @@ async function trocarDestaque() {
 
 /* ===== cartão para compartilhar ===== */
 async function cartao() {
-  const dlg = $('#dlg-cartao'), cv = $('#cartao-cv'), g = cv.getContext('2d'), W = cv.width, H = cv.height;
+  const dlg = $('#dlg-cartao'), cv = $('#cartao-cv'), W = cv.width;
+  cv.height = 1500;
+  const g = cv.getContext('2d'), H = cv.height;
   $('#cartao-msg').textContent = '';
   dlg.showModal();
   try { await Promise.all([document.fonts.load('700 60px Silkscreen'), document.fonts.load('800 30px Nunito')]); } catch {}
@@ -350,12 +365,12 @@ async function cartao() {
   const jogo = D.jogos.find(x => x.nome === ALVO.destaque) || D.jogos[0];
   const ids = jogo ? jogo.time.slice(0, 6) : P.slice(0, 6).map(p => p.id);
   const mvpId = jogo ? mvpDe(jogo) : null;
-  const tros = D.trofeus.map(t => ({ t, n: totalTro(t) })).filter(x => x.n).sort((a, b) => (b.t.peso || 1) - (a.t.peso || 1)).slice(0, 5);
+  const tros = D.trofeus.map(t => ({ t, n: totalTro(t) })).filter(x => x.n).sort((a, b) => (b.t.peso || 1) - (a.t.peso || 1)).slice(0, 4);
   const trJogo = jogo ? D.trofeus.find(t => t.id === jogo.trofeu) : null;
-  const [foto, tipos, artes, imgsT, bt, coroa, imTrJogo] = await Promise.all([
+  const [foto, tipos, sprs, imgsT, bt, coroa, imTrJogo] = await Promise.all([
     ALVO.foto_url ? carregar(ALVO.foto_url) : null,
     tiposTop(2),
-    Promise.all(ids.map(async id => (await carregar(ARTE(id))) || (await carregar(SPRITE(id))))),
+    Promise.all(ids.map(id => carregar(SPRITE(id)))),
     Promise.all(tros.map(x => carregar(x.t.imagem))),
     ALVO.beta ? carregar('img/beta.png') : null,
     carregar('img/mvp.png'),
@@ -367,9 +382,8 @@ async function cartao() {
     if (stroke) { g.strokeStyle = stroke; g.lineWidth = lw || 2; g.stroke(); }
   };
   const contain = (im, x, y, w, h) => { const r = Math.min(w / im.width, h / im.height); g.drawImage(im, x + (w - im.width * r) / 2, y + (h - im.height * r) / 2, im.width * r, im.height * r); };
-  const rotulo = (txt, x, y, alinha) => { g.textAlign = alinha || 'left'; g.fillStyle = '#8fb8e3'; g.font = '800 24px Nunito, sans-serif'; try { g.letterSpacing = '4px'; } catch {} g.fillText(txt.toUpperCase(), x, y); try { g.letterSpacing = '0px'; } catch {} };
+  const rotulo = (txt, x, y) => { g.textAlign = 'left'; g.fillStyle = '#8fb8e3'; g.font = '800 24px Nunito, sans-serif'; try { g.letterSpacing = '4px'; } catch {} g.fillText(txt.toUpperCase(), x, y); try { g.letterSpacing = '0px'; } catch {} };
   g.clearRect(0, 0, W, H);
-  // fundo: azul liso com uma luz suave e grade de pontos
   let gr = g.createLinearGradient(0, 0, W, H); gr.addColorStop(0, '#0b2d6b'); gr.addColorStop(0.55, '#071f4a'); gr.addColorStop(1, '#04122e');
   g.fillStyle = gr; g.fillRect(0, 0, W, H);
   gr = g.createRadialGradient(180, 120, 0, 180, 120, 620); gr.addColorStop(0, '#2196F340'); gr.addColorStop(1, '#2196F300');
@@ -385,63 +399,63 @@ async function cartao() {
   if (foto) { const m = Math.min(foto.width, foto.height); g.drawImage(foto, (foto.width - m) / 2, (foto.height - m) / 2, m, m, ax - ar, ay - ar, ar * 2, ar * 2); }
   else { g.fillStyle = '#1565C0'; g.fillRect(ax - ar, ay - ar, ar * 2, ar * 2); g.fillStyle = '#E3F2FD'; g.font = '700 80px Silkscreen, monospace'; g.textAlign = 'center'; g.fillText((ALVO.nome || ALVO.username)[0].toUpperCase(), ax, ay + 28); }
   g.restore();
-  g.strokeStyle = '#90CAF9'; g.lineWidth = 6; g.beginPath(); g.arc(ax, ay, ar, 0, Math.PI * 2); g.stroke();
-  const nome = ALVO.nome || ALVO.username, nx = ax + ar + 36, maxN = W - nx - 72 - (bt ? 76 : 0);
+  const nome = ALVO.nome || ALVO.username, nx = ax + ar + 36, maxN = W - nx - 72 - (bt ? 56 : 0);
   let fs = 64; g.textAlign = 'left';
   do { g.font = `700 ${fs}px Silkscreen, monospace`; fs -= 2; } while (g.measureText(nome).width > maxN && fs > 24);
   g.fillStyle = '#fff'; g.fillText(nome, nx, ay - 6);
-  if (bt) contain(bt, nx + g.measureText(nome).width + 16, ay - 6 - 54, 60, 60);
+  if (bt) contain(bt, nx + g.measureText(nome).width + 14, ay - 6 - 40, 38, 38);
   g.fillStyle = '#8fb8e3'; g.font = '800 32px Nunito, sans-serif'; g.fillText('@' + ALVO.username, nx, ay + 40);
-  // time de destaque
+  // time de destaque: sprites em 2x, 3 por linha, sem caixas
   rotulo(jogo ? 'Time de destaque' : 'Mais campeões', 72, 440);
   if (jogo) {
     g.textAlign = 'right'; g.fillStyle = '#fff'; g.font = '800 30px Nunito, sans-serif';
-    const lw = g.measureText(jogo.nome).width;
     g.fillText(jogo.nome, W - 72 - (imTrJogo ? 52 : 0), 440, 560);
     if (imTrJogo) contain(imTrJogo, W - 72 - 44, 402, 44, 50);
   }
-  const pw = 148, gap = 12, x0 = (W - (pw * 6 + gap * 5)) / 2;
+  const cw = (W - 144) / 3, linhaH = 290;
   ids.forEach((id, i) => {
-    const x = x0 + i * (pw + gap), y = 470, mvp = id === mvpId;
-    rr(x, y, pw, 232, 20, '#ffffff0f', mvp ? '#f5c542' : '#90CAF933', mvp ? 3 : 2);
-    if (artes[i]) contain(artes[i], x + 8, y + 22, pw - 16, pw - 16);
-    if (mvp && coroa) contain(coroa, x + pw / 2 - 22, y - 18, 44, 44);
+    const cx = 72 + (i % 3) * cw + cw / 2, y = 478 + Math.floor(i / 3) * linhaH, mvp = id === mvpId;
+    if (mvp) {
+      gr = g.createRadialGradient(cx, y + 100, 10, cx, y + 100, 120); gr.addColorStop(0, '#f5c54240'); gr.addColorStop(1, '#f5c54200');
+      g.fillStyle = gr; g.fillRect(cx - 130, y - 20, 260, 240);
+    }
+    if (sprs[i]) { g.imageSmoothingEnabled = false; g.drawImage(sprs[i], cx - 96, y, 192, 192); g.imageSmoothingEnabled = true; }
+    if (mvp && coroa) contain(coroa, cx + 52, y - 4, 52, 52);
     const ap = jogo && (jogo.apelidos || {})[id], p = M[id];
-    g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = '800 22px Nunito, sans-serif';
-    g.fillText(ap || (p ? p.nome : nomeDe(id)), x + pw / 2, y + 196, pw - 14);
-    if (ap && p) { g.fillStyle = '#8fb8e3'; g.font = '700 17px Nunito, sans-serif'; g.fillText(p.nome, x + pw / 2, y + 218, pw - 14); }
+    g.textAlign = 'center'; g.fillStyle = mvp ? '#f5d36b' : '#fff'; g.font = '800 30px Nunito, sans-serif';
+    g.fillText(ap || (p ? p.nome : nomeDe(id)), cx, y + 228, cw - 24);
+    if (ap && p) { g.fillStyle = '#8fb8e3'; g.font = '700 21px Nunito, sans-serif'; g.fillText(p.nome, cx, y + 256, cw - 24); }
   });
+  g.fillStyle = '#90CAF933'; g.fillRect(72, 1076, W - 144, 2);
   // números
-  const tit = D.trofeus.reduce((s, t) => s + totalTro(t), 0);
+  const tit = D.trofeus.reduce((s, t) => s + totalTro(t), 0), col = (W - 144) / 3;
   [[D.jogos.length, D.jogos.length === 1 ? 'time campeão' : 'times campeões'], [P.length, 'Pokémon usados'], [tit, tit === 1 ? 'título' : 'títulos']].forEach(([n, l], i) => {
-    const cx = 72 + (W - 144) / 6 + i * (W - 144) / 3;
-    g.textAlign = 'center'; g.fillStyle = '#E3F2FD'; g.font = '800 84px Nunito, sans-serif'; g.fillText(String(n), cx, 830);
-    g.fillStyle = '#8fb8e3'; g.font = '700 26px Nunito, sans-serif'; g.fillText(l, cx, 870);
-    if (i) { g.fillStyle = '#90CAF933'; g.fillRect(72 + i * (W - 144) / 3, 770, 2, 120); }
+    const cx = 72 + col / 2 + i * col;
+    g.textAlign = 'center'; g.fillStyle = '#E3F2FD'; g.font = '800 84px Nunito, sans-serif'; g.fillText(String(n), cx, 1176);
+    g.fillStyle = '#8fb8e3'; g.font = '700 26px Nunito, sans-serif'; g.fillText(l, cx, 1214);
   });
-  // tipos
-  rotulo('Tipos mais usados', 72, 970);
+  g.fillStyle = '#90CAF933'; g.fillRect(72, 1252, W - 144, 2);
+  // tipos (esquerda) e troféus (direita)
+  rotulo('Tipos mais usados', 72, 1304);
   g.font = '800 30px Nunito, sans-serif';
   let tx = 72;
   tipos.forEach(([t]) => {
-    const nm = (TIPOS[t] || [t])[0], w = g.measureText(nm).width + 56;
-    rr(tx, 992, w, 58, 14, (TIPOS[t] || [0, '#777'])[1]);
-    g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(nm, tx + w / 2, 1031); tx += w + 14;
+    const nm = (TIPOS[t] || [t])[0], w = g.measureText(nm).width + 52;
+    rr(tx, 1326, w, 56, 14, (TIPOS[t] || [0, '#777'])[1]);
+    g.textAlign = 'center'; g.fillStyle = '#fff'; g.fillText(nm, tx + w / 2, 1364); tx += w + 12;
   });
-  // troféus
   if (tros.length) {
-    rotulo('Troféus', 72, 1110);
-    const item = (W - 144) / tros.length;
+    const rx = 560, item = (W - 72 - rx) / 4;
+    rotulo('Troféus', rx, 1304);
     tros.forEach((x, i) => {
-      const bx = 72 + i * item;
-      if (imgsT[i]) contain(imgsT[i], bx, 1130, 70, 86);
-      g.textAlign = 'left'; g.fillStyle = '#E3F2FD'; g.font = '800 44px Nunito, sans-serif'; g.fillText(String(x.n), bx + 80, 1188);
+      const bx = rx + i * item;
+      if (imgsT[i]) contain(imgsT[i], bx, 1320, 46, 70);
+      g.textAlign = 'left'; g.fillStyle = '#E3F2FD'; g.font = '800 38px Nunito, sans-serif'; g.fillText(String(x.n), bx + 54, 1368);
     });
   }
   // rodapé
-  g.fillStyle = '#90CAF933'; g.fillRect(72, 1252, W - 144, 2);
   g.textAlign = 'left'; g.fillStyle = '#8fb8e3'; g.font = '700 26px Nunito, sans-serif';
-  g.fillText(location.href.split('#')[0].replace(/^https?:\/\//, '').replace(/index\.html$/, '') + '#/u/' + ALVO.username, 72, 1302, W - 144);
+  g.fillText(location.href.split('#')[0].replace(/^https?:\/\//, '').replace(/index\.html$/, '') + '#/u/' + ALVO.username, 72, 1452, W - 144);
 }
 
 function iniciarExtras() {
@@ -458,6 +472,63 @@ function iniciarExtras() {
       }, 'image/png');
     } catch { $('#cartao-msg').textContent = 'O navegador bloqueou a imagem. Tire um print do cartão.'; }
   };
+}
+
+/* ===== estatísticas e coleção ===== */
+const GERACOES = [['I', 1, 151], ['II', 152, 251], ['III', 252, 386], ['IV', 387, 493], ['V', 494, 649], ['VI', 650, 721], ['VII', 722, 809], ['VIII', 810, 905], ['IX', 906, 1025]];
+const TOTAL_POKEMON = 1025;
+
+function barras(itens, maxFixo) {
+  const box = el('div', 'barras'), max = maxFixo || Math.max(1, ...itens.map(i => i.valor));
+  itens.forEach(i => {
+    const r = el('div', 'gbar'), l = el('span', 'b-rot'), tr = el('span', 'b-trilho'), f = el('span', 'b-fill');
+    if (i.img) { const im = new Image(); im.src = i.img; im.alt = ''; l.append(im); }
+    l.append(el('span', null, i.rotulo));
+    f.style.background = i.cor || 'var(--azul)';
+    tr.append(f);
+    r.append(l, tr, el('span', 'b-val', i.texto || i.valor));
+    if (i.clique) { r.classList.add('clicavel'); r.onclick = i.clique; }
+    box.append(r);
+    requestAnimationFrame(() => requestAnimationFrame(() => { f.style.width = `${Math.max(3, i.valor / max * 100)}%`; }));
+  });
+  return box;
+}
+
+function cartaoEst(titulo, ...filhos) {
+  const c = el('div', 'est-card');
+  c.append(el('h3', null, titulo), ...filhos);
+  return c;
+}
+
+function graficos() {
+  const box = $('#est-box');
+  box.replaceChildren();
+  const usados = P.filter(p => p.jogos.length);
+  if (!usados.length) { box.append(el('p', 'mut', dono() ? 'Cadastre um time para ver os gráficos.' : 'Esta pessoa ainda não cadastrou times.')); return; }
+
+  const top = [...usados].sort((a, b) => b.jogos.length - a.jogos.length || b.pontos - a.pontos).slice(0, 10);
+  box.append(cartaoEst('Pokémon mais usados', barras(top.map(p => ({
+    rotulo: p.nome, valor: p.jogos.length, texto: `${p.jogos.length} ${p.jogos.length === 1 ? 'time' : 'times'}`,
+    img: SPRITE(p.id), clique: () => abrir(p)
+  })))));
+
+  const tp = {};
+  usados.forEach(p => (p.tipos || []).forEach(t => { tp[t] = (tp[t] || 0) + p.jogos.length; }));
+  const tipos = Object.entries(tp).sort((a, b) => b[1] - a[1]);
+  box.append(cartaoEst('Tipos mais usados', barras(tipos.map(([t, n]) => ({
+    rotulo: (TIPOS[t] || [t])[0], valor: n, texto: n, cor: (TIPOS[t] || [0, '#777'])[1], clique: () => filtrarTipo(t)
+  })))));
+
+  const ids = new Set(P.map(p => p.id).filter(i => i <= TOTAL_POKEMON)), tem = ids.size;
+  const geral = el('div', 'colecao-topo');
+  geral.append(el('strong', null, tem), el('span', null, ` de ${TOTAL_POKEMON} Pokémon (${(tem / TOTAL_POKEMON * 100).toFixed(1).replace('.', ',')}%)`));
+  const porGer = GERACOES.map(([n, a, b]) => {
+    let c = 0; for (const i of ids) if (i >= a && i <= b) c++;
+    return { rotulo: `Geração ${n}`, valor: c / (b - a + 1) * 100, texto: `${c}/${b - a + 1}` };
+  });
+  const cartaoCol = cartaoEst('Coleção', geral, barras(porGer, 100));
+  cartaoCol.classList.add('larga');
+  box.append(cartaoCol);
 }
 
 let atual = 0;
@@ -521,12 +592,13 @@ function palco(i) {
 }
 
 function aba(n) {
-  ['inicio', 'ranking', 'times', 'editar', 'seguindo'].forEach(k => {
+  ['inicio', 'ranking', 'estatisticas', 'times', 'editar', 'seguindo'].forEach(k => {
     $('#' + k + '-secao').hidden = k !== n;
     document.querySelector(`[data-aba=${k}]`).setAttribute('aria-selected', k === n);
   });
   if (n === 'times' && D && D.jogos.length) palco(atual);
   if (n === 'seguindo') listarSeguindo();
+  if (n === 'estatisticas') graficos();
 }
 document.querySelectorAll('[data-aba]').forEach(b => b.onclick = () => aba(b.dataset.aba));
 document.addEventListener('keydown', e => {
@@ -715,7 +787,7 @@ function montarLegenda() {
   ul.replaceChildren();
   [...D.trofeus].sort((a, b) => (b.peso || 1) - (a.peso || 1)).forEach(t => {
     const li = el('li'), p = t.peso || 1;
-    li.append(trofeu(t), t.nome, el('strong', null, `${p} ${p === 1 ? 'ponto' : 'pontos'}`));
+    li.append(trofeu(t), el('span', 'l-nome', t.nome), el('strong', null, `${p} ${p === 1 ? 'ponto' : 'pontos'}`));
     ul.append(li);
   });
 }
@@ -960,26 +1032,65 @@ async function carregarMeu() {
   SEGUINDO = new Set(((await sb.from('seguindo').select('seguido').eq('seguidor', USER.id)).data || []).map(x => x.seguido));
 }
 
+let modoAuth = 'entrar';
+function modoEntrada(m) {
+  modoAuth = m;
+  const criar = m === 'criar';
+  $('#ab-entrar').setAttribute('aria-selected', !criar);
+  $('#ab-criar').setAttribute('aria-selected', criar);
+  $('#a-enviar').textContent = criar ? 'Criar conta' : 'Entrar';
+  $('#a-senha').autocomplete = criar ? 'new-password' : 'current-password';
+  $('#a-senha').placeholder = criar ? 'Crie uma senha' : 'Sua senha';
+  $('#a-dica').hidden = !criar;
+  $('#a-esqueci').hidden = criar;
+  $('#a-msg').textContent = ''; $('#a-msg').className = 'auth-msg';
+}
+
+function msgAuth(txt, tipo) { const m = $('#a-msg'); m.textContent = txt; m.className = 'auth-msg ' + (tipo || ''); }
+
+const ERROS_AUTH = [
+  [/invalid login credentials/i, 'E-mail ou senha incorretos.'],
+  [/already registered|already been registered/i, 'Esse e-mail já tem conta. Clique em "Entrar".'],
+  [/email not confirmed/i, 'Confirme seu e-mail antes de entrar. Veja a caixa de entrada e o spam.'],
+  [/at least 6|weak/i, 'A senha precisa ter pelo menos 6 caracteres.'],
+  [/rate|seconds|too many/i, 'Muitas tentativas seguidas. Espere um pouco e tente de novo.'],
+  [/invalid.*email|email.*invalid|valid email/i, 'Digite um e-mail válido.']
+];
+
 async function autenticar(cria) {
-  const email = $('#a-email').value.trim(), password = $('#a-senha').value, msg = $('#a-msg');
-  msg.textContent = '';
+  const email = $('#a-email').value.trim(), password = $('#a-senha').value, bt = $('#a-enviar');
+  if (!/^\S+@\S+\.\S+$/.test(email)) return void msgAuth('Digite um e-mail válido.', 'erro');
+  if (cria && password.length < 6) return void msgAuth('A senha precisa ter pelo menos 6 caracteres.', 'erro');
+  if (!password) return void msgAuth('Digite sua senha.', 'erro');
+  const texto = bt.textContent;
+  bt.disabled = true; bt.textContent = cria ? 'Criando...' : 'Entrando...'; msgAuth('');
   let res;
   try { res = cria ? await sb.auth.signUp({ email, password }) : await sb.auth.signInWithPassword({ email, password }); }
   catch (e) { res = { error: e }; }
+  bt.disabled = false; bt.textContent = texto;
   const { data, error } = res;
-  if (error) return void (msg.textContent = /fetch|network/i.test(error.message || '') ? `Não consegui falar com o Supabase (${new URL(CFG.SUPABASE_URL.trim()).host}). Confira o ID na URL do config.js, se o projeto está ativo e se algum bloqueador está ligado.` : error.message);
-  if (cria && !data.session) msg.textContent = 'Conta criada! Confirme o e-mail que você recebeu e depois entre.';
+  if (error) {
+    const m = error.message || '';
+    if (/fetch|network/i.test(m)) return void msgAuth(`Não consegui falar com o Supabase (${new URL(CFG.SUPABASE_URL.trim()).host}). Confira o ID na URL do config.js, se o projeto está ativo e se algum bloqueador está ligado.`, 'erro');
+    const conhecido = ERROS_AUTH.find(([re]) => re.test(m));
+    return void msgAuth(conhecido ? conhecido[1] : m, 'erro');
+  }
+  if (cria && data && data.user && !data.session) {
+    if (data.user.identities && !data.user.identities.length) return void msgAuth('Esse e-mail já tem conta. Clique em "Entrar".', 'erro');
+    modoEntrada('entrar');
+    msgAuth('Conta criada! Enviamos um e-mail de confirmação. Clique no link e depois entre aqui.', 'ok');
+  }
 }
 
 async function esqueciSenha() {
-  const email = $('#a-email').value.trim(), msg = $('#a-msg');
-  if (!email) return void (msg.textContent = 'Digite seu e-mail no campo acima e clique de novo em "Esqueci minha senha".');
-  msg.textContent = 'Enviando...';
+  const email = $('#a-email').value.trim();
+  if (!/^\S+@\S+\.\S+$/.test(email)) return void msgAuth('Digite seu e-mail no campo acima e clique de novo em "Esqueci minha senha".', 'erro');
+  msgAuth('Enviando...');
   let res;
   try { res = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname }); }
   catch (e) { res = { error: e }; }
-  if (res.error) msg.textContent = /rate|seconds|limit/i.test(res.error.message || '') ? 'Muitos pedidos seguidos. Espere alguns minutos e tente de novo.' : res.error.message;
-  else msg.textContent = 'Se esse e-mail tiver uma conta, enviamos um link para criar uma nova senha. Olhe também o spam.';
+  if (res.error) msgAuth(/rate|seconds|limit/i.test(res.error.message || '') ? 'Muitos pedidos seguidos. Espere alguns minutos e tente de novo.' : res.error.message, 'erro');
+  else msgAuth('Se esse e-mail tiver uma conta, enviamos um link para criar uma nova senha. Olhe também o spam.', 'ok');
 }
 
 async function salvarSenha() {
@@ -993,11 +1104,20 @@ async function salvarSenha() {
   setTimeout(() => { $('#dlg-senha').close(); $('#ns-1').value = $('#ns-2').value = ''; msg.textContent = ''; }, 1200);
 }
 
+function previaLink() {
+  const u = $('#c-user');
+  u.value = u.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  $('#c-previa').textContent = location.origin.replace(/^https?:\/\//, '') + location.pathname.replace(/index\.html$/, '') + '#/u/' + (u.value || 'seunome');
+}
+
 async function criarPerfil() {
-  const username = $('#c-user').value.trim().toLowerCase(), nome = $('#c-nome').value.trim() || username, msg = $('#c-msg');
-  if (!/^[a-z0-9_]{3,20}$/.test(username)) return void (msg.textContent = 'Use de 3 a 20 letras minúsculas, números ou _.');
+  const username = $('#c-user').value.trim().toLowerCase(), nome = $('#c-nome').value.trim() || username, msg = $('#c-msg'), bt = $('#c-criar');
+  msg.className = 'auth-msg erro';
+  if (!/^[a-z0-9_]{3,20}$/.test(username)) return void (msg.textContent = 'Use de 3 a 20 letras minúsculas, números ou _ (sem espaços).');
+  bt.disabled = true; msg.textContent = '';
   const { error } = await sb.from('perfis').insert({ id: USER.id, username, nome });
-  if (error) return void (msg.textContent = error.code === '23505' ? 'Esse nome de usuário já existe.' : error.message);
+  bt.disabled = false;
+  if (error) return void (msg.textContent = error.code === '23505' ? 'Esse nome de usuário já existe. Escolha outro.' : error.message);
   await carregarMeu();
   location.hash = '#/u/' + username;
 }
@@ -1050,10 +1170,13 @@ async function rota() {
   }
   sb = window.supabase.createClient(url, CFG.SUPABASE_KEY.trim());
   try { TROFEUS = (await (await fetch('trofeus.json')).json()).trofeus; } catch { return ver('v-config'); }
-  $('#a-entrar').onclick = () => autenticar(false);
-  $('#a-criar').onclick = () => autenticar(true);
-  $('#a-senha').onkeydown = e => { if (e.key === 'Enter') autenticar(false); };
-  $('#c-criar').onclick = criarPerfil;
+  $('#auth-form').onsubmit = e => { e.preventDefault(); autenticar(modoAuth === 'criar'); };
+  $('#ab-entrar').onclick = () => modoEntrada('entrar');
+  $('#ab-criar').onclick = () => modoEntrada('criar');
+  $('#a-ver').onclick = () => { const v = $('#a-senha').type === 'password'; $('#a-senha').type = v ? 'text' : 'password'; $('#a-ver').textContent = v ? 'Ocultar' : 'Mostrar'; };
+  $('#criar-form').onsubmit = e => { e.preventDefault(); criarPerfil(); };
+  $('#c-user').oninput = previaLink;
+  previaLink(); modoEntrada('entrar');
   $('#a-esqueci').onclick = esqueciSenha;
   $('#ns-salvar').onclick = salvarSenha;
   $('#ns-cancelar').onclick = () => $('#dlg-senha').close();
