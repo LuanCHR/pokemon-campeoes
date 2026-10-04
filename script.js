@@ -849,12 +849,16 @@ function cabecalho() {
 }
 
 async function listarSeguindo() {
-  const ul = $('#seg-lista'), ids = [...SEGUINDO];
+  const ul = $('#seg-lista'), ids = [...SEGUINDO], aviso = $('#seg-vazio');
   ul.replaceChildren();
-  $('#seg-vazio').hidden = ids.length > 0;
+  aviso.textContent = 'Você ainda não segue ninguém. Para achar alguém, peça o link do perfil da pessoa.';
+  aviso.hidden = ids.length > 0;
   if (!ids.length) return;
-  const { data } = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
-  (data || []).forEach(p => {
+  // a coluna "beta" só existe depois de rodar o SQL novo; sem ela, busca sem o selo
+  let r = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
+  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url').in('id', ids);
+  if (r.error) { aviso.textContent = 'Não consegui carregar a lista: ' + r.error.message; aviso.hidden = false; return; }
+  (r.data || []).forEach(p => {
     const li = el('li'), a = el('a');
     a.href = '#/u/' + p.username;
     const nm = el('span', null, `${p.nome || p.username} (@${p.username})`);

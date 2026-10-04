@@ -314,3 +314,6 @@ body{background:linear-gradient(180deg,#0a2a63 0,#061a3d 460px,#04122e 100%) no-
 .dest .membro:hover,.linha:hover{box-shadow:none;transform:translateY(-3px)}
 .tile:hover{transform:none}
 .ed-btn{border-radius:10px}
+
+/* botões do cabeçalho do perfil voltam a ser cápsulas */
+.cab-acoes button{border-radius:999px;padding:8px 20px}
