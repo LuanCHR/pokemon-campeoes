@@ -1,0 +1,47 @@
+{
+  "trofeus": [
+    { "id": "craft",           "nome": "Copa Craft",                  "imagem": "img/trofeus/craft.png",           "peso": 3 },
+    { "id": "bola-ouro-craft", "nome": "MVP da Copa Craft",          "imagem": "img/trofeus/bola-ouro-craft.png", "peso": 3 },
+    { "id": "liga",            "nome": "Troféu de liga",              "imagem": "img/trofeus/liga.png",            "peso": 2 },
+    { "id": "bola-ouro-liga",  "nome": "MVP da Liga",                "imagem": "img/trofeus/bola-ouro-liga.png",  "peso": 2 },
+    { "id": "medalha",         "nome": "Medalha",                     "imagem": "img/trofeus/medalha.png",         "peso": 1 },
+    { "id": "pokerogue",       "nome": "Campeão do PokéRogue",        "imagem": "img/trofeus/pokerogue.png",       "peso": 2 },
+    { "id": "pokerogue-mvp",   "nome": "MVP do PokéRogue",            "imagem": "img/trofeus/pokerogue-mvp.png",   "peso": 2 }
+  ],
+  "jogos": [
+    { "nome": "Pokémon FireRed",           "trofeu": "liga",    "time": [6, 18, 94, 131, 143, 34], "apelidos": { "6": "Lombra", "18": "Fiel", "94": "Jabulani", "131": "Larp", "143": "Mc Ryan", "34": "Andrógeno" } },
+    { "nome": "Pokémon LeafGreen",         "trofeu": "liga",    "time": [6, 12, 134, 122, 107, 51], "apelidos": { "6": "Lombra", "12": "Niguafree", "134": "Sonic", "122": "Pc Siqueira", "107": "Poatan", "51": "Nigtrio" } },
+    { "nome": "Pokémon SoulSilver",        "trofeu": "liga",    "time": [160, 214, 197, 59, 112, 123], "apelidos": { "160": "Jaré", "214": "Von", "197": "Max", "59": "Marley", "112": "Uni", "123": "Barato" } },
+    { "nome": "Pokémon Black",             "trofeu": "liga",    "time": [503, 560, 553, 587, 637, 591], "apelidos": { "503": "Trixie", "560": "Fimose", "553": "Lacoste", "587": "HM Girl", "637": "Soberanas", "591": "Psilocybe" } },
+    { "nome": "Pokémon Black 2",           "trofeu": "liga",    "time": [497, 560, 466, 342, 472, 555], "apelidos": { "497": "Djamba", "560": "Fimose", "466": "Duracell", "342": "Siriguejo", "472": "Pfizer", "555": "4lan" } },
+    { "nome": "Pokémon X",                 "trofeu": "liga",    "time": [6, 560, 700, 591, 464, 131], "apelidos": { "6": "Lombra", "560": "Fimose", "700": "Beexa", "591": "Nargas", "464": "Toboco", "131": "Merry" } },
+    { "nome": "Pokémon Y",                 "trofeu": "liga",    "time": [658, 6, 18, 12, 560, 282], "apelidos": { "658": "Lambe Bola", "6": "Lombra", "18": "Fiel", "12": "Niguafree", "560": "Fimose", "282": "Pierce the Veil" } },
+    { "nome": "Pokémon Alpha Sapphire",    "trofeu": "liga",    "time": [257, 376, 279, 330, 303, 332], "apelidos": { "257": "Corinthians", "376": "Rudeu", "279": "Bouqueta", "330": "Oakley", "303": "Rapunzel", "332": "Diamba" } },
+    { "nome": "Pokémon Ultra Sun",         "trofeu": "liga",    "time": [727, 279, 553, 103, 743, 560], "apelidos": { "727": "Dustin Poirier", "279": "Bouqueta", "553": "Lacoste", "103": "Palestra", "743": "Milagre", "560": "Fimose" } },
+    { "nome": "Pokémon Sun",               "trofeu": "liga",    "time": [727, 25, 130, 778, 149, 560] ,"apelidos": { "727": "Dustin Poirier", "25": "Twink", "130": "Mushu", "778": "Fem-boy", "149": "Imenso", "560": "Fimose" } },
+    { "nome": "Pokémon Scarlet",           "trofeu": "liga",    "time": [914, 980, 448, 937, 135, 959] ,"apelidos": { "914": "Biquixa", "980": "Kimo", "448": "Luciano", "937": "Lança", "135": "Caramelo", "959": "Prego" } },
+    { "nome": "Pokémon Shield",            "trofeu": "liga",    "time": [812, 110, 609, 195, 849, 865], "apelidos": { "812": "George", "110": "Nargas", "609": "Lampião", "195": "Sêmen", "849": "São Mateus", "865": "Blunt" } },
+    { "nome": "Pokémon Brilliant Diamond", "trofeu": "liga",    "time": [392, 398, 122, 184, 445, 94], "apelidos": { "392": "Botas", "398": "Pomba", "122": "Pc Siqueira", "184": "Jambrolha", "445": "Tralalela", "94": "Jabulano" } },
+    { "nome": "Pokémon Legends: Z-A",      "trofeu": "medalha", "time": [160, 181, 3, 560, 6, 707], "apelidos": { "160": "Jaré", "181": "Shaun", "3": "Charradinho", "560": "Fimose", "6": "Lombra", "707": "Chaves" } },
+    { "nome": "Copa Craft: 1ª edição", "trofeu": "craft", "time": [727, 279, 560, 110, 445, 25],
+      "extras": [ { "pokemon": 279, "trofeu": "bola-ouro-craft" } ] },
+    { "nome": "Copa Craft: 2ª edição", "trofeu": "craft", "time": [392, 121, 332, 849, 472, 778],
+      "extras": [ { "pokemon": 472, "trofeu": "bola-ouro-craft" } ] },
+    { "nome": "Copa Craft: 3ª edição", "trofeu": "craft", "time": [157, 78, 131, 980, 491, 384],
+      "extras": [ { "pokemon": 131, "trofeu": "bola-ouro-craft" } ] },
+    { "nome": "Copa Craft: 4ª edição", "trofeu": "craft", "time": [389, 959, 91, 992, 376, 249],
+      "extras": [ { "pokemon": 249, "trofeu": "bola-ouro-craft" } ] }
+  ],
+  "individuais": [
+    { "pokemon": 143, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 6,   "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 392, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 279, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 560, "trofeu": "bola-ouro-liga", "quantidade": 4 },
+    { "pokemon": 727, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 160, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 812, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 980, "trofeu": "bola-ouro-liga", "quantidade": 1 },
+    { "pokemon": 553, "trofeu": "bola-ouro-liga", "quantidade": 1 }
+  ]
+}
