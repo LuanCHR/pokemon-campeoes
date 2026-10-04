@@ -248,3 +248,32 @@ dialog input:not([type=file]){font:inherit;padding:9px 12px;border:1px solid var
 /* cor do tipo no perfil do Pokémon */
 #perfil{border-color:var(--tc,var(--linha));box-shadow:0 0 44px -14px var(--tc,transparent)}
 #perfil .p-topo{border-radius:14px;padding:6px 10px;background:radial-gradient(320px 140px at 15% 0,color-mix(in srgb,var(--tc,#2196F3) 45%,transparent),transparent 75%)}
+
+/* editor: time e Pokédex */
+.ed-slots{display:grid;gap:8px;margin:6px 0 14px}
+.slot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;border:1px solid var(--linha);border-radius:14px;background:var(--card)}
+.slot.vazio{border-style:dashed;opacity:.75}
+.slot .bola{width:56px;height:56px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:var(--campo);border:2px solid var(--realce);overflow:hidden;font:700 16px Silkscreen,monospace;color:var(--mut)}
+.slot.vazio .bola{border:2px dashed var(--linha)}
+.slot .bola img{width:56px;height:56px;image-rendering:pixelated}
+.slot .nm{flex:1 1 150px;font-weight:800}
+.slot.vazio .nm{font-weight:600;color:var(--mut)}
+.slot .ap{flex:1 1 170px}
+.slot .ed-mvp{flex:0 0 auto}
+.slot .rm{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--linha);background:none;color:var(--red);font:700 20px/1 Nunito,sans-serif;cursor:pointer;padding:0}
+.slot .rm:hover{border-color:var(--red)}
+.dex{border:1px solid var(--linha);border-radius:16px;padding:12px;margin:0 0 12px;background:#0000002a}
+.dex-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.dex-topo h4{margin:0;font:700 13px Silkscreen,monospace;color:var(--realce);flex:1 1 100%}
+.dex-topo input[type=search]{flex:1 1 200px}
+.dex-todos{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--mut);cursor:pointer}
+.ed-card .dex-todos input{width:auto;padding:0;border:0;accent-color:var(--realce)}
+.dex-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px;max-height:420px;overflow:auto;padding:2px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px 6px;border:1px solid var(--linha);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer;font:700 11px/1.15 Nunito,sans-serif;text-align:center;transition:.15s}
+.tile img{width:64px;height:64px;image-rendering:pixelated}
+.tile:hover{border-color:var(--realce);transform:translateY(-2px);background:#2196F322}
+.tile.no-time{opacity:.4;border-color:var(--azul)}
+.tile.no-time::after{content:"\2713";position:absolute;top:3px;right:6px;color:var(--realce);font-size:13px}
+#dlg-senha{width:min(400px,calc(100% - 24px))}
+#ns-msg,#a-msg{color:var(--realce);font-size:14px}
+.slot .nm{text-align:left}

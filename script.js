@@ -497,15 +497,116 @@ const ORDEM = { liga: 0, craft: 1, pokerogue: 2, medalha: 3 };
 const COMP = { craft: 'bola-ouro-craft', liga: 'bola-ouro-liga', medalha: null, pokerogue: 'pokerogue-mvp' };
 const JOGOS = ['Red', 'Blue', 'Yellow', 'Gold', 'Silver', 'Crystal', 'Ruby', 'Sapphire', 'Emerald', 'FireRed', 'LeafGreen', 'Diamond', 'Pearl', 'Platinum', 'HeartGold', 'SoulSilver', 'Black', 'White', 'Black 2', 'White 2', 'X', 'Y', 'Omega Ruby', 'Alpha Sapphire', 'Sun', 'Moon', 'Ultra Sun', 'Ultra Moon', "Let's Go, Pikachu!", "Let's Go, Eevee!", 'Sword', 'Shield', 'Brilliant Diamond', 'Shining Pearl', 'Legends: Arceus', 'Scarlet', 'Violet', 'Legends: Z-A'];
 
-let NOMES = {};
-(async () => {
-  try {
-    const r = await (await fetch('https://pokeapi.co/api/v2/pokemon?limit=1400')).json();
-    NOMES = Object.fromEntries(r.results.map(x => [x.name, +x.url.split('/').filter(Boolean).pop()]));
-    r.results.forEach(x => $('#lista-pokemon').append(new Option(x.name, x.name)));
-  } catch {}
-})();
-const resolver = v => { const par = /\((\d+)\)\s*$/.exec(v); if (par) return +par[1]; v = v.trim().toLowerCase().replace(/\s+/g, '-'); return /^\d+$/.test(v) ? +v : NOMES[v] || null; };
+/* ===== Pokédex por jogo ===== */
+const DEX = {
+  'Red': [2], 'Blue': [2], 'Yellow': [2], 'FireRed': [2], 'LeafGreen': [2],
+  'Gold': [3], 'Silver': [3], 'Crystal': [3], 'HeartGold': [7], 'SoulSilver': [7],
+  'Ruby': [4], 'Sapphire': [4], 'Emerald': [4], 'Omega Ruby': [15], 'Alpha Sapphire': [15],
+  'Diamond': [5], 'Pearl': [5], 'Platinum': [6], 'Brilliant Diamond': 'ate493', 'Shining Pearl': 'ate493',
+  'Black': [8], 'White': [8], 'Black 2': [9], 'White 2': [9],
+  'X': [12, 13, 14], 'Y': [12, 13, 14],
+  'Sun': [16], 'Moon': [16], 'Ultra Sun': [21], 'Ultra Moon': [21],
+  "Let's Go, Pikachu!": [26], "Let's Go, Eevee!": [26],
+  'Sword': [27, 28, 29], 'Shield': [27, 28, 29], 'Legends: Arceus': [30],
+  'Scarlet': [31, 32, 33], 'Violet': [31, 32, 33], 'Legends: Z-A': [34, 35]
+};
+let ESP = {}, DEXC = {};
+try { ESP = JSON.parse(localStorage.getItem('esp1') || '{}'); DEXC = JSON.parse(localStorage.getItem('dex2') || '{}'); } catch {}
+const idUrl = u => +u.split('/').filter(Boolean).pop();
+const bonito = n => n.split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' ');
+const nomeDe = id => ESP[id] ? bonito(ESP[id]) : (M[id] && M[id].nome) || '#' + id;
+
+async function idsDex(chave) {
+  if (DEXC[chave]) return DEXC[chave];
+  let ids;
+  if (chave === 'todos') {
+    const r = await (await fetch('https://pokeapi.co/api/v2/pokemon-species?limit=2000')).json();
+    ids = r.results.map(x => { const id = idUrl(x.url); ESP[id] = x.name; return id; }).sort((a, b) => a - b);
+  } else {
+    const r = await (await fetch(`https://pokeapi.co/api/v2/pokedex/${chave}`)).json();
+    ids = r.pokemon_entries.map(e => { const id = idUrl(e.pokemon_species.url); ESP[id] = e.pokemon_species.name; return id; });
+  }
+  DEXC[chave] = ids;
+  try { localStorage.setItem('dex2', JSON.stringify(DEXC)); localStorage.setItem('esp1', JSON.stringify(ESP)); } catch {}
+  return ids;
+}
+async function listaDex(def) {
+  if (def === 'todos') return idsDex('todos');
+  if (def === 'ate493') return (await idsDex('todos')).filter(i => i <= 493);
+  return [...new Set((await Promise.all(def.map(idsDex))).flat())];
+}
+function defDex() {
+  const k = $('#ed-trofeu').value, v = ($('#ed-extra-campo') || {}).value;
+  if (k === 'craft' || k === 'pokerogue' || $('#dex-todos').checked) return { def: 'todos', titulo: 'Todos os Pokémon' };
+  if (k === 'medalha') return { def: DEX['Legends: Z-A'], titulo: 'Pokédex de Pokémon Legends: Z-A' };
+  if (!v) return null;
+  return { def: DEX[v] || 'todos', titulo: `Pokédex de Pokémon ${v}` };
+}
+
+/* ===== time em montagem ===== */
+let SLOTS = Array(6).fill(null), tokenDex = 0;
+
+function desenharSlots() {
+  const box = $('#ed-time'), mvpOk = !!COMP[$('#ed-trofeu').value];
+  box.replaceChildren();
+  SLOTS.forEach((s, i) => {
+    const r = el('div', 'slot' + (s ? '' : ' vazio')), bola = el('span', 'bola');
+    if (s) { const im = new Image(); im.src = SPRITE(s.id); im.alt = ''; bola.append(im); } else bola.textContent = i + 1;
+    r.append(bola, el('span', 'nm', s ? nomeDe(s.id) : 'Escolha na Pokédex abaixo'));
+    if (s) {
+      const ap = el('input', 'ap'), m = el('label', 'ed-mvp'), c = el('input'), x = el('button', 'rm', '×');
+      ap.placeholder = 'Apelido (opcional)'; ap.value = s.ap || ''; ap.maxLength = 24;
+      ap.oninput = () => { s.ap = ap.value; };
+      c.type = 'checkbox'; c.checked = !!s.mvp;
+      c.onchange = () => { SLOTS.forEach(o => { if (o) o.mvp = false; }); s.mvp = c.checked; desenharSlots(); };
+      m.append(c, ' MVP'); m.hidden = !mvpOk;
+      x.type = 'button'; x.title = 'Tirar do time'; x.setAttribute('aria-label', 'Tirar do time');
+      x.onclick = () => { SLOTS[i] = null; desenharSlots(); marcarDex(); };
+      r.append(ap, m, x);
+    }
+    box.append(r);
+  });
+}
+
+function marcarDex() {
+  const no = new Set(SLOTS.filter(Boolean).map(s => s.id));
+  document.querySelectorAll('#dex-grade .tile').forEach(t => t.classList.toggle('no-time', no.has(+t.dataset.id)));
+}
+
+function adicionar(id) {
+  const msg = $('#ed-msg');
+  if (SLOTS.some(s => s && s.id === id)) return void (msg.textContent = `${nomeDe(id)} já está no time.`);
+  const i = SLOTS.findIndex(s => !s);
+  if (i < 0) return void (msg.textContent = 'O time já tem 6 Pokémon. Tire um para trocar.');
+  SLOTS[i] = { id, ap: '', mvp: false };
+  msg.textContent = '';
+  desenharSlots(); marcarDex();
+}
+
+async function desenharDex() {
+  const eu = ++tokenDex, g = $('#dex-grade'), msg = $('#dex-msg'), k = $('#ed-trofeu').value;
+  $('#dex-todos-l').hidden = k === 'craft' || k === 'pokerogue';
+  const d = defDex();
+  if (!d) { g.replaceChildren(); $('#dex-titulo').textContent = 'Pokédex'; msg.textContent = 'Escolha a versão do jogo para ver os Pokémon disponíveis.'; return; }
+  $('#dex-titulo').textContent = d.titulo;
+  msg.textContent = 'Carregando...';
+  let ids;
+  try { ids = await listaDex(d.def); }
+  catch { if (eu === tokenDex) { g.replaceChildren(); msg.textContent = 'Não consegui carregar a Pokédex agora. Confira a internet e troque a versão para tentar de novo.'; } return; }
+  if (eu !== tokenDex) return;
+  const q = sem($('#dex-q').value.trim());
+  const lista = ids.filter(id => !q || sem(bonito(ESP[id] || '')).includes(q) || String(id) === q);
+  g.replaceChildren(...lista.map(id => {
+    const t = el('button', 'tile'), im = new Image();
+    t.type = 'button'; t.dataset.id = id; t.title = `${nomeDe(id)} (Nº ${id})`;
+    im.src = SPRITE(id); im.alt = ''; im.loading = 'lazy';
+    t.append(im, el('span', null, nomeDe(id)));
+    t.onclick = () => adicionar(id);
+    return t;
+  }));
+  msg.textContent = lista.length ? `${lista.length} Pokémon. Clique para adicionar ao time.` : 'Nenhum Pokémon encontrado.';
+  marcarDex();
+}
 
 function campoExtra() {
   const k = $('#ed-trofeu').value, box = $('#ed-extra'), pref = { craft: 'Copa Craft', pokerogue: 'Copa PokéRogue' }[k];
@@ -517,56 +618,44 @@ function campoExtra() {
     const ed = D.jogos.map(j => +(re.exec(j.nome) || [])[1]).filter(Boolean);
     const n = Math.max(k === 'craft' ? 4 : 2, Math.max(0, ...ed) + 1);
     for (let i = 1; i <= n; i++) c.append(new Option(`${i}ª edição`, i));
+  } else if (k === 'medalha') {
+    c = el('input'); c.value = 'Pokémon Legends: Z-A'; c.disabled = true;
   } else {
-    c = el('input');
-    if (k === 'medalha') { c.value = 'Pokémon Legends: Z-A'; c.disabled = true; }
-    else { c.placeholder = 'Qual jogo? (ex.: Emerald)'; c.setAttribute('list', 'lista-jogos'); }
+    c = el('select');
+    c.append(new Option('Escolha o jogo (versão)', ''));
+    JOGOS.forEach(j => c.append(new Option(j, j)));
+    c.onchange = () => { $('#dex-todos').checked = false; desenharDex(); };
   }
   c.id = 'ed-extra-campo';
   box.append(c);
-  document.querySelectorAll('#ed-time .ed-mvp').forEach(m => { m.hidden = !COMP[k]; if (!COMP[k]) m.firstChild.checked = false; });
+  if (!COMP[k]) SLOTS.forEach(s => { if (s) s.mvp = false; });
+  desenharSlots(); desenharDex();
 }
 
 function montarEditor() {
-  const dl = el('datalist');
-  dl.id = 'lista-jogos';
-  JOGOS.forEach(j => dl.append(new Option(j, j)));
-  document.body.append(dl);
   const s = $('#ed-trofeu');
   Object.keys(COMP).forEach(k => { const t = D.trofeus.find(x => x.id === k); if (t) s.append(new Option(t.nome, k)); });
-  for (let i = 0; i < 6; i++) {
-    const r = el('div', 'ed-linha'), p = el('input'), a = el('input'), m = el('label', 'ed-mvp'), c = el('input');
-    p.placeholder = 'Pokémon (nome ou nº)'; p.setAttribute('list', 'lista-pokemon'); a.placeholder = 'Apelido (opcional)';
-    c.type = 'checkbox';
-    c.onchange = () => { if (c.checked) document.querySelectorAll('#ed-time .ed-mvp input').forEach(o => { if (o !== c) o.checked = false; }); };
-    m.append(c, ' MVP');
-    r.append(p, a, m);
-    $('#ed-time').append(r);
-  }
-  s.onchange = campoExtra;
+  s.onchange = () => { $('#dex-todos').checked = false; campoExtra(); };
+  $('#dex-q').oninput = desenharDex;
+  $('#dex-todos').onchange = desenharDex;
   $('#ed-salvar').onclick = salvarTime;
   $('#ed-cancelar').onclick = () => { sairEdicao(); limparForm(); };
   $('#ed-baixar').onclick = baixar;
   $('#imp-arq').onchange = importar;
+  desenharSlots();
 }
 
 async function salvarTime() {
   const msg = $('#ed-msg'), k = $('#ed-trofeu').value, v = $('#ed-extra-campo').value.trim();
   const ed = { craft: 'Copa Craft', pokerogue: 'Copa PokéRogue' }[k];
   const nome = ed ? `${ed}: ${v}ª edição` : k === 'medalha' ? 'Pokémon Legends: Z-A' : v && (/^pok[eé]mon\b/i.test(v) ? v : `Pokémon ${v}`);
-  const time = [], apelidos = {}, extras = [], erros = [];
-  document.querySelectorAll('#ed-time .ed-linha').forEach(r => {
-    const [p, a, m] = r.children;
-    if (!p.value.trim()) return;
-    const id = resolver(p.value);
-    if (!id) return void erros.push(p.value);
-    time.push(id);
-    if (a.value.trim()) apelidos[id] = a.value.trim();
-    if (m.firstChild.checked && COMP[k]) extras.push({ pokemon: id, trofeu: COMP[k] });
+  const cheio = SLOTS.filter(Boolean), time = cheio.map(s => s.id), apelidos = {}, extras = [];
+  cheio.forEach(s => {
+    if (s.ap && s.ap.trim()) apelidos[s.id] = s.ap.trim();
+    if (s.mvp && COMP[k]) extras.push({ pokemon: s.id, trofeu: COMP[k] });
   });
-  if (!nome) return void (msg.textContent = 'Informe qual jogo.');
+  if (!nome) return void (msg.textContent = 'Escolha o jogo (versão).');
   if (!time.length) return void (msg.textContent = 'Adicione pelo menos um Pokémon.');
-  if (erros.length) return void (msg.textContent = 'Não encontrei: ' + erros.join(', '));
   if (D.jogos.some(j => j.nome === nome && !(edit && j.id === edit.id))) return void (msg.textContent = `Já existe: ${nome}.`);
   const mvps = Object.values(COMP);
   const novo = { nome, trofeu: k, time, apelidos, extras: [...(edit ? (edit.extras || []).filter(e => !mvps.includes(e.trofeu)) : []), ...extras] };
@@ -588,8 +677,10 @@ function montarLegenda() {
 }
 
 function limparForm() {
-  document.querySelectorAll('#ed-time input').forEach(i => { if (i.type === 'checkbox') i.checked = false; else i.value = ''; });
+  SLOTS = Array(6).fill(null);
+  $('#dex-q').value = ''; $('#dex-todos').checked = false;
   $('#ed-msg').textContent = '';
+  desenharSlots(); marcarDex();
 }
 
 function sairEdicao() {
@@ -605,21 +696,20 @@ function editar(j) {
   $('#ed-titulo').textContent = `Editando: ${j.nome}`;
   $('#ed-salvar').textContent = 'Salvar alterações';
   $('#ed-cancelar').hidden = false;
-  limparForm();
+  $('#ed-msg').textContent = ''; $('#dex-q').value = ''; $('#dex-todos').checked = false;
   $('#ed-trofeu').value = j.trofeu;
+  SLOTS = Array(6).fill(null);
   campoExtra();
   const f = $('#ed-extra-campo'), m = /(\d+)ª edição$/.exec(j.nome);
   if (m) f.value = m[1];
-  else if (j.trofeu === 'liga') f.value = j.nome.replace(/^Pokémon /, '');
+  else if (j.trofeu === 'liga') {
+    const g = j.nome.replace(/^Pokémon /, '');
+    if (![...f.options].some(o => o.value === g)) f.append(new Option(g, g));
+    f.value = g;
+  }
   const mvp = (j.extras || []).find(e => e.trofeu === COMP[j.trofeu]);
-  document.querySelectorAll('#ed-time .ed-linha').forEach((r, i) => {
-    const id = j.time[i];
-    if (!id) return;
-    const [p, a, c] = r.children;
-    p.value = `${(M[id] || {}).nome || '#' + id} (${id})`;
-    a.value = (j.apelidos || {})[id] || '';
-    c.firstChild.checked = !!mvp && mvp.pokemon === id;
-  });
+  j.time.slice(0, 6).forEach((id, i) => { SLOTS[i] = { id, ap: (j.apelidos || {})[id] || '', mvp: !!mvp && mvp.pokemon === id }; });
+  desenharSlots(); desenharDex();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -821,6 +911,28 @@ async function autenticar(cria) {
   if (cria && !data.session) msg.textContent = 'Conta criada! Confirme o e-mail que você recebeu e depois entre.';
 }
 
+async function esqueciSenha() {
+  const email = $('#a-email').value.trim(), msg = $('#a-msg');
+  if (!email) return void (msg.textContent = 'Digite seu e-mail no campo acima e clique de novo em "Esqueci minha senha".');
+  msg.textContent = 'Enviando...';
+  let res;
+  try { res = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname }); }
+  catch (e) { res = { error: e }; }
+  if (res.error) msg.textContent = /rate|seconds|limit/i.test(res.error.message || '') ? 'Muitos pedidos seguidos. Espere alguns minutos e tente de novo.' : res.error.message;
+  else msg.textContent = 'Se esse e-mail tiver uma conta, enviamos um link para criar uma nova senha. Olhe também o spam.';
+}
+
+async function salvarSenha() {
+  const a = $('#ns-1').value, b = $('#ns-2').value, msg = $('#ns-msg');
+  if (a.length < 6) return void (msg.textContent = 'Use pelo menos 6 caracteres.');
+  if (a !== b) return void (msg.textContent = 'As duas senhas não são iguais.');
+  msg.textContent = 'Salvando...';
+  const { error } = await sb.auth.updateUser({ password: a });
+  if (error) return void (msg.textContent = error.message);
+  msg.textContent = 'Senha alterada!';
+  setTimeout(() => { $('#dlg-senha').close(); $('#ns-1').value = $('#ns-2').value = ''; msg.textContent = ''; }, 1200);
+}
+
 async function criarPerfil() {
   const username = $('#c-user').value.trim().toLowerCase(), nome = $('#c-nome').value.trim() || username, msg = $('#c-msg');
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return void (msg.textContent = 'Use de 3 a 20 letras minúsculas, números ou _.');
@@ -882,11 +994,16 @@ async function rota() {
   $('#a-criar').onclick = () => autenticar(true);
   $('#a-senha').onkeydown = e => { if (e.key === 'Enter') autenticar(false); };
   $('#c-criar').onclick = criarPerfil;
+  $('#a-esqueci').onclick = esqueciSenha;
+  $('#ns-salvar').onclick = salvarSenha;
+  $('#ns-cancelar').onclick = () => $('#dlg-senha').close();
+  $('#ns-2').onkeydown = e => { if (e.key === 'Enter') salvarSenha(); };
   $('#k-salvar').onclick = salvarConta;
   iniciarCorte(); iniciarLupa(); iniciarExtras();
   $('#k-fechar').onclick = () => $('#dlg-conta').close();
   let primeira = true;
   sb.auth.onAuthStateChange((ev, s) => {
+    if (ev === 'PASSWORD_RECOVERY') setTimeout(() => $('#dlg-senha').showModal(), 0);
     const novo = s ? s.user : null;
     if (!primeira && (novo ? novo.id : null) === (USER ? USER.id : null)) return;
     primeira = false;
