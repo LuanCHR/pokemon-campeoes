@@ -41,6 +41,24 @@
       "nome": "MVP do PokéRogue",
       "imagem": "img/trofeus/pokerogue-mvp.png",
       "peso": 2
+    },
+    {
+      "id": "liga-nuzlocke",
+      "nome": "Troféu de liga Nuzlocke",
+      "imagem": "img/trofeus/liga-nuzlocke.png",
+      "peso": 3
+    },
+    {
+      "id": "bola-ouro-liga-nuzlocke",
+      "nome": "MVP da Liga Nuzlocke",
+      "imagem": "img/trofeus/bola-ouro-liga-nuzlocke.png",
+      "peso": 3
+    },
+    {
+      "id": "medalha-nuzlocke",
+      "nome": "Medalha Nuzlocke (caídos)",
+      "imagem": "img/trofeus/medalha-nuzlocke.png",
+      "peso": 1
     }
   ]
 }

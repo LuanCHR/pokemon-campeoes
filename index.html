@@ -131,14 +131,19 @@
     <section id="editar-secao" hidden>
       <div class="ed-card">
         <h3 id="ed-titulo">Novo time campeão</h3>
-        <div class="ed-campos"><select id="ed-trofeu" aria-label="Competição"></select><span id="ed-extra" class="ed-extra"></span></div>
+        <div class="ed-campos"><select id="ed-trofeu" aria-label="Competição"></select><span id="ed-extra" class="ed-extra"></span><label id="ed-nz-l" class="nz" hidden><input type="checkbox" id="ed-nz"> Nuzlocke</label></div>
         <div id="ed-time" class="ed-slots"></div>
+        <div id="cem-bloco" class="cem-bloco" hidden>
+          <h4>† Cemitério <small>Pokémon que morreram na jornada</small></h4>
+          <div id="ed-cem"></div>
+        </div>
         <div class="dex">
           <div class="dex-topo">
             <h4 id="dex-titulo">Pokédex</h4>
             <input id="dex-q" type="search" placeholder="Buscar por nome ou número" aria-label="Buscar na Pokédex" autocomplete="off">
             <label id="dex-todos-l" class="dex-todos"><input type="checkbox" id="dex-todos"> Mostrar todos os Pokémon</label>
           </div>
+          <div id="dex-alvo" class="dex-alvo" hidden><button type="button" data-alvo="time" aria-pressed="true">Adicionar ao time</button><button type="button" data-alvo="cem" aria-pressed="false">Adicionar ao cemitério</button></div>
           <div id="dex-grade" class="dex-grade"></div>
           <p id="dex-msg" class="mut"></p>
         </div>

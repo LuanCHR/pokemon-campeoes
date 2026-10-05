@@ -13,13 +13,14 @@ function el(tag, cls, txt) {
 }
 const sem = s => s.toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
 
-const cache = JSON.parse(localStorage.getItem('pk3') || '{}');
+const cache = JSON.parse(localStorage.getItem('pk4') || '{}');
 async function infoDe(id) {
   if (cache[id]) return cache[id];
   try {
     const d = await (await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)).json();
-    cache[id] = { nome: d.species.name.split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' '), tipos: d.types.map(t => t.type.name), stats: d.stats.map(x => x.base_stat) };
-    localStorage.setItem('pk3', JSON.stringify(cache));
+    const esp = d.species.name, suf = d.name.startsWith(esp + '-') ? d.name.slice(esp.length + 1) : '';
+    cache[id] = { nome: esp.split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' ') + (suf ? ` (${suf.split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' ')})` : ''), tipos: d.types.map(t => t.type.name), stats: d.stats.map(x => x.base_stat) };
+    localStorage.setItem('pk4', JSON.stringify(cache));
     return cache[id];
   } catch { return { nome: `#${id}`, tipos: [] }; }
 }
@@ -31,6 +32,7 @@ function contar(dados) {
   dados.jogos.forEach(j => {
     j.time.forEach(id => soma(id, j.trofeu));
     (j.extras || []).forEach(e => soma(e.pokemon, e.trofeu));
+    (j.caidos || []).forEach(c => soma(c.id, 'medalha-nuzlocke'));
   });
   (dados.individuais || []).forEach(e => soma(e.pokemon, e.trofeu, e.quantidade || 1));
   return c;
@@ -210,14 +212,17 @@ function filtrarTipo(tipo) {
   $('#ranking-secao').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+let CN = {};
 async function render(dados) {
   D = dados; M = {};
   const c = contar(D);
   const ids = Object.keys(c).map(Number);
   const infos = await Promise.all(ids.map(infoDe));
+  const cai = [...new Set(D.jogos.flatMap(j => (j.caidos || []).map(x => x.id)))];
+  CN = Object.fromEntries((await Promise.all(cai.map(infoDe))).map((x, i) => [cai[i], x.nome]));
   const peso = Object.fromEntries(D.trofeus.map(t => [t.id, t.peso || 1]));
   P = ids.map((id, i) => {
-    const jogos = D.jogos.filter(j => j.time.includes(id)), t = c[id].t;
+    const jogos = D.jogos.filter(j => j.time.includes(id) || (j.caidos || []).some(x => x.id === id)), t = c[id].t;
     return {
       id, nome: infos[i].nome, tipos: infos[i].tipos, stats: infos[i].stats, c: c[id], jogos,
       apelidos: jogos.map(j => (j.apelidos || {})[id]).filter(Boolean),
@@ -279,6 +284,7 @@ let tokenStats = 0;
 
 /* ===== início: conquistas, time de destaque, top 3, estado vazio ===== */
 const totalTro = t => D.jogos.filter(j => j.trofeu === t.id).length
+  + (t.id === 'medalha-nuzlocke' ? D.jogos.reduce((s, j) => s + (j.caidos || []).length, 0) : 0)
   + D.jogos.reduce((s, j) => s + (j.extras || []).filter(e => e.trofeu === t.id).length, 0)
   + (D.individuais || []).filter(e => e.trofeu === t.id).reduce((s, e) => s + (e.quantidade || 1), 0);
 
@@ -287,7 +293,9 @@ function conquistas() {
   box.replaceChildren();
   if (!P.length) return;
   D.trofeus.forEach(t => {
-    const n = totalTro(t), d = el('div', n ? '' : 'zero');
+    const n = totalTro(t);
+    if (!n && /-nuzlocke$/.test(t.id)) return;
+    const d = el('div', n ? '' : 'zero');
     d.title = t.nome;
     const im = new Image(); im.alt = ''; im.src = t.imagem; im.onerror = () => im.remove();
     d.append(im, el('b', null, n), el('span', null, t.nome));
@@ -319,6 +327,8 @@ function inicio() {
   if (dono()) {
     sel.replaceChildren(...D.jogos.map(x => { const o = new Option(x.nome, x.nome); o.selected = x.nome === j.nome; return o; }));
   }
+  const nc = (j.caidos || []).length;
+  $('#d-nome').textContent = j.nome + (nc ? `  ·  † ${nc} ${nc === 1 ? 'caiu' : 'caíram'}` : '');
   const mvp = mvpDe(j), time = $('#d-time');
   time.replaceChildren();
   j.time.forEach(id => {
@@ -372,7 +382,7 @@ async function cartao() {
     tiposTop(2),
     Promise.all(ids.map(id => carregar(SPRITE(id)))),
     Promise.all(tros.map(x => carregar(x.t.imagem))),
-    ALVO.beta ? carregar('img/beta.png') : null,
+    Promise.all([ALVO.beta ? carregar('img/beta.png') : null, ALVO.beta2 ? carregar('img/beta2.png') : null]).then(a => a.filter(Boolean)),
     carregar('img/mvp.png'),
     trJogo ? carregar(trJogo.imagem) : null
   ]);
@@ -399,11 +409,11 @@ async function cartao() {
   if (foto) { const m = Math.min(foto.width, foto.height); g.drawImage(foto, (foto.width - m) / 2, (foto.height - m) / 2, m, m, ax - ar, ay - ar, ar * 2, ar * 2); }
   else { g.fillStyle = '#1565C0'; g.fillRect(ax - ar, ay - ar, ar * 2, ar * 2); g.fillStyle = '#E3F2FD'; g.font = '700 80px Silkscreen, monospace'; g.textAlign = 'center'; g.fillText((ALVO.nome || ALVO.username)[0].toUpperCase(), ax, ay + 28); }
   g.restore();
-  const nome = ALVO.nome || ALVO.username, nx = ax + ar + 36, maxN = W - nx - 72 - (bt ? 56 : 0);
+  const nome = ALVO.nome || ALVO.username, nx = ax + ar + 36, maxN = W - nx - 72 - bt.length * 48;
   let fs = 64; g.textAlign = 'left';
   do { g.font = `700 ${fs}px Silkscreen, monospace`; fs -= 2; } while (g.measureText(nome).width > maxN && fs > 24);
   g.fillStyle = '#fff'; g.fillText(nome, nx, ay - 6);
-  if (bt) contain(bt, nx + g.measureText(nome).width + 14, ay - 6 - 40, 38, 38);
+  bt.forEach((b, i) => { const z = b.src.includes('beta2') ? 46 : 38; contain(b, nx + g.measureText(nome).width + 14 + i * 50, ay - 6 - 40 - (z - 38) / 2, z, z); });
   g.fillStyle = '#8fb8e3'; g.font = '800 32px Nunito, sans-serif'; g.fillText('@' + ALVO.username, nx, ay + 40);
   // time de destaque: sprites em 2x, 3 por linha, sem caixas
   rotulo(jogo ? 'Time de destaque' : 'Mais campeões', 72, 440);
@@ -532,17 +542,23 @@ function graficos() {
 }
 
 let atual = 0;
+const grupoDe = j => D.jogos.filter(x => baseDe(x.nome) === baseDe(j.nome)).sort((p, q) => p.nome.localeCompare(q.nome));
 function montarTimes() {
   $('#linha-tempo').replaceChildren();
   if (!D.jogos.length) { $('#palco').replaceChildren(el('p', 'mut', 'Nenhum time cadastrado ainda.')); return; }
+  const vistos = new Set();
   D.jogos.forEach((j, i) => {
+    const base = baseDe(j.nome);
+    if (vistos.has(base)) return;
+    vistos.add(base);
     const b = el('button', 'marco');
     b.type = 'button';
+    b.dataset.base = base;
     b.style.setProperty('--i', i);
     const t = D.trofeus.find(y => y.id === j.trofeu);
     if (t) { const im = new Image(); im.src = t.imagem; im.alt = ''; b.append(im); }
-    b.append(j.nome.replace(/^Pokémon /, ''));
-    b.onclick = () => palco(i);
+    b.append(base.replace(/^Pokémon /, ''));
+    b.onclick = () => palco(D.jogos.indexOf(grupoDe(j)[0]));
     $('#linha-tempo').append(b);
   });
   palco(Math.min(atual, D.jogos.length - 1));
@@ -551,9 +567,10 @@ function montarTimes() {
 function palco(i) {
   atual = (i + D.jogos.length) % D.jogos.length;
   const j = D.jogos[atual];
-  document.querySelectorAll('.marco').forEach((b, k) => {
-    b.setAttribute('aria-pressed', k === atual);
-    if (k === atual) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+  document.querySelectorAll('.marco').forEach(b => {
+    const on = b.dataset.base === baseDe(j.nome);
+    b.setAttribute('aria-pressed', on);
+    if (on) b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
   });
   const t = D.trofeus.find(y => y.id === j.trofeu);
   const ant = el('button', 'seta', '‹'), prox = el('button', 'seta', '›');
@@ -587,7 +604,32 @@ function palco(i) {
     ac.append(be, bx);
     nos.push(ac);
   }
+  const grupo = grupoDe(j);
+  if (grupo.length > 1) {
+    const sel = el('div', 'seletor-time');
+    grupo.forEach((g, n) => {
+      const bt = el('button', null, n + 1);
+      bt.type = 'button'; bt.title = `${n + 1}º time`; bt.setAttribute('aria-label', `${n + 1}º time`);
+      bt.setAttribute('aria-pressed', g === j);
+      bt.onclick = () => palco(D.jogos.indexOf(g));
+      sel.append(bt);
+    });
+    nos.push(sel);
+  }
   nos.push(time);
+  if ((j.caidos || []).length) {
+    const cem = el('div', 'cemiterio');
+    cem.append(el('h4', null, `† Cemitério (${j.caidos.length})`));
+    const lista = el('div', 'cem-lista');
+    j.caidos.forEach(c => {
+      const m = el('div', 'cem-item');
+      m.append(sprite(c.id, CN[c.id] || ''), el('strong', null, c.ap || CN[c.id] || '#' + c.id));
+      if (c.ap) m.append(el('small', null, CN[c.id] || ''));
+      lista.append(m);
+    });
+    cem.append(lista);
+    nos.push(cem);
+  }
   $('#palco').replaceChildren(...nos);
 }
 
@@ -609,8 +651,19 @@ document.addEventListener('keydown', e => {
 
 // ---------- Editor de times (dono do perfil) ----------
 let edit = null;
-const ORDEM = { liga: 0, craft: 1, pokerogue: 2, medalha: 3 };
-const COMP = { craft: 'bola-ouro-craft', liga: 'bola-ouro-liga', medalha: null, pokerogue: 'pokerogue-mvp' };
+const ORDEM = { liga: 0, 'liga-nuzlocke': 0, craft: 1, pokerogue: 2, medalha: 3 };
+const COMP = { craft: 'bola-ouro-craft', liga: 'bola-ouro-liga', medalha: null, pokerogue: 'pokerogue-mvp', 'liga-nuzlocke': 'bola-ouro-liga-nuzlocke' };
+const NZ = ': Nuzlocke', MAX_TIMES = 3, MAX_CEM = 60;
+const baseDe = n => n.replace(/ \((\d)º time\)$/, '');
+const nuzOn = () => !!$('#ed-nz').checked && !$('#ed-nz-l').hidden;
+const chaveEf = () => $('#ed-trofeu').value + (nuzOn() ? '-nuzlocke' : '');
+// escolhe o nome livre: "X", "X (2º time)", "X (3º time)"
+function nomeLivre(base, proprio) {
+  const outros = D.jogos.filter(j => !(edit && j.id === edit.id)).map(j => j.nome);
+  if (proprio && baseDe(proprio) === base) return proprio;
+  const opcoes = [base, `${base} (2º time)`, `${base} (3º time)`];
+  return opcoes.find(o => !outros.includes(o)) || null;
+}
 const JOGOS = ['Red', 'Blue', 'Yellow', 'Gold', 'Silver', 'Crystal', 'Ruby', 'Sapphire', 'Emerald', 'FireRed', 'LeafGreen', 'Diamond', 'Pearl', 'Platinum', 'HeartGold', 'SoulSilver', 'Black', 'White', 'Black 2', 'White 2', 'X', 'Y', 'Omega Ruby', 'Alpha Sapphire', 'Sun', 'Moon', 'Ultra Sun', 'Ultra Moon', "Let's Go, Pikachu!", "Let's Go, Eevee!", 'Sword', 'Shield', 'Brilliant Diamond', 'Shining Pearl', 'Legends: Arceus', 'Scarlet', 'Violet', 'Legends: Z-A'];
 
 /* ===== Pokédex por jogo ===== */
@@ -630,7 +683,32 @@ let ESP = {}, DEXC = {};
 try { ESP = JSON.parse(localStorage.getItem('esp1') || '{}'); DEXC = JSON.parse(localStorage.getItem('dex2') || '{}'); } catch {}
 const idUrl = u => +u.split('/').filter(Boolean).pop();
 const bonito = n => n.split('-').map(p => p[0].toUpperCase() + p.slice(1)).join(' ');
-const nomeDe = id => ESP[id] ? bonito(ESP[id]) : (M[id] && M[id].nome) || '#' + id;
+let FORMAS = [];
+try { FORMAS = JSON.parse(localStorage.getItem('formas1') || '[]'); } catch {}
+const FORMA = {};
+FORMAS.forEach(f => { FORMA[f[0]] = f; });
+const nomeDe = id => {
+  if (FORMA[id]) { const [, n, sp] = FORMA[id], b = ESP[sp] || ''; return bonito(b) + ` (${bonito(n.slice(b.length + 1))})`; }
+  return ESP[id] ? bonito(ESP[id]) : (M[id] && M[id].nome) || '#' + id;
+};
+const FORMA_RUIM = /-(mega|mega-[xyz]|gmax|primal|totem|totem-\w+|cap|\w+-cap|cosplay|rock-star|belle|pop-star|phd|libre|starter|eternamax|battle-bond|busted|school|meteor|hangry|ultra|terastal|stellar|\w*power-construct|dada|ash|gulping|gorging|antique|zero-hero|hero|low-power)$|-(mega|gmax|totem|cap)-|-starter|-gmax/;
+const REGIAO = { alola: ['Sun', 'Moon', 'Ultra Sun', 'Ultra Moon', "Let's Go, Pikachu!", "Let's Go, Eevee!"], galar: ['Sword', 'Shield'], hisui: ['Legends: Arceus', 'Scarlet', 'Violet'], paldea: ['Scarlet', 'Violet'] };
+async function carregarFormas() {
+  if (FORMAS.length) return FORMAS;
+  const esp = await idsDex('todos');
+  const nomes = esp.map(i => [i, ESP[i]]).sort((a, b) => b[1].length - a[1].length);
+  const r = await (await fetch('https://pokeapi.co/api/v2/pokemon?limit=2000')).json();
+  FORMAS = r.results.map(x => [idUrl(x.url), x.name]).filter(([id, n]) => id > 10000 && !FORMA_RUIM.test(n))
+    .map(([id, n]) => { const sp = nomes.find(([, nm]) => n.startsWith(nm + '-')); return sp ? [id, n, sp[0]] : null; }).filter(Boolean);
+  FORMAS.forEach(f => { FORMA[f[0]] = f; });
+  try { localStorage.setItem('formas1', JSON.stringify(FORMAS)); } catch {}
+  return FORMAS;
+}
+function formaPermitida(f, jogo) {
+  const suf = f[1].slice((ESP[f[2]] || '').length + 1), reg = suf.split('-')[0];
+  if (REGIAO[reg]) return jogo === 'todos' || REGIAO[reg].includes(jogo);
+  return true;
+}
 
 async function idsDex(chave) {
   if (DEXC[chave]) return DEXC[chave];
@@ -646,24 +724,30 @@ async function idsDex(chave) {
   try { localStorage.setItem('dex2', JSON.stringify(DEXC)); localStorage.setItem('esp1', JSON.stringify(ESP)); } catch {}
   return ids;
 }
-async function listaDex(def) {
-  if (def === 'todos') return idsDex('todos');
-  if (def === 'ate493') return (await idsDex('todos')).filter(i => i <= 493);
-  return [...new Set((await Promise.all(def.map(idsDex))).flat())];
+async function listaDex(def, jogo) {
+  let base;
+  if (def === 'todos') base = await idsDex('todos');
+  else if (def === 'ate493') base = (await idsDex('todos')).filter(i => i <= 493);
+  else base = [...new Set((await Promise.all(def.map(idsDex))).flat())];
+  let formas = [];
+  try { formas = await carregarFormas(); } catch {}
+  const por = {};
+  formas.filter(f => formaPermitida(f, jogo)).forEach(f => { (por[f[2]] ||= []).push(f[0]); });
+  return base.flatMap(i => [i, ...(por[i] || [])]);
 }
 function defDex() {
   const k = $('#ed-trofeu').value, v = ($('#ed-extra-campo') || {}).value;
-  if (k === 'craft' || k === 'pokerogue' || $('#dex-todos').checked) return { def: 'todos', titulo: 'Todos os Pokémon' };
-  if (k === 'medalha') return { def: DEX['Legends: Z-A'], titulo: 'Pokédex de Pokémon Legends: Z-A' };
+  if (k === 'craft' || k === 'pokerogue' || $('#dex-todos').checked) return { def: 'todos', jogo: 'todos', titulo: 'Todos os Pokémon' };
+  if (k === 'medalha') return { def: DEX['Legends: Z-A'], jogo: 'Legends: Z-A', titulo: 'Pokédex de Pokémon Legends: Z-A' };
   if (!v) return null;
-  return { def: DEX[v] || 'todos', titulo: `Pokédex de Pokémon ${v}` };
+  return { def: DEX[v] || 'todos', jogo: v, titulo: `Pokédex de Pokémon ${v}` };
 }
 
 /* ===== time em montagem ===== */
 let SLOTS = Array(6).fill(null), tokenDex = 0;
 
 function desenharSlots() {
-  const box = $('#ed-time'), mvpOk = !!COMP[$('#ed-trofeu').value];
+  const box = $('#ed-time'), mvpOk = !!COMP[chaveEf()];
   box.replaceChildren();
   SLOTS.forEach((s, i) => {
     const r = el('div', 'slot' + (s ? '' : ' vazio')), bola = el('span', 'bola');
@@ -689,8 +773,35 @@ function marcarDex() {
   document.querySelectorAll('#dex-grade .tile').forEach(t => t.classList.toggle('no-time', no.has(+t.dataset.id)));
 }
 
+let CEM = [], alvoDex = 'time';
+function desenharCem() {
+  const box = $('#ed-cem'), nz = nuzOn();
+  $('#cem-bloco').hidden = !nz; $('#dex-alvo').hidden = !nz;
+  if (!nz) alvoDex = 'time';
+  document.querySelectorAll('#dex-alvo button').forEach(b => b.setAttribute('aria-pressed', b.dataset.alvo === alvoDex));
+  box.replaceChildren();
+  if (!CEM.length) box.append(el('p', 'mut', 'Ninguém caiu ainda. Troque para "Cemitério" acima da Pokédex e clique nos Pokémon que morreram.'));
+  CEM.forEach((c, i) => {
+    const r = el('div', 'cem-lin'), im = new Image(), ap = el('input'), x = el('button', 'rm', '×');
+    im.src = SPRITE(c.id); im.alt = '';
+    ap.placeholder = 'Apelido (opcional)'; ap.value = c.ap || ''; ap.maxLength = 24; ap.oninput = () => { c.ap = ap.value; };
+    x.type = 'button'; x.title = 'Tirar do cemitério'; x.setAttribute('aria-label', 'Tirar do cemitério');
+    x.onclick = () => { CEM.splice(i, 1); desenharCem(); };
+    r.append(im, el('span', 'nm', nomeDe(c.id)), ap, x);
+    box.append(r);
+  });
+}
+
 function adicionar(id) {
   const msg = $('#ed-msg');
+  if (alvoDex === 'cem' && nuzOn()) {
+    if (CEM.some(c => c.id === id)) return void (msg.textContent = `${nomeDe(id)} já está no cemitério.`);
+    if (SLOTS.some(s => s && s.id === id)) return void (msg.textContent = `${nomeDe(id)} está no time. Tire do time primeiro.`);
+    if (CEM.length >= MAX_CEM) return void (msg.textContent = `O cemitério aceita até ${MAX_CEM} Pokémon.`);
+    CEM.push({ id, ap: '' }); msg.textContent = '';
+    desenharCem(); return;
+  }
+  if (CEM.some(c => c.id === id)) return void (msg.textContent = `${nomeDe(id)} está no cemitério.`);
   if (SLOTS.some(s => s && s.id === id)) return void (msg.textContent = `${nomeDe(id)} já está no time.`);
   const i = SLOTS.findIndex(s => !s);
   if (i < 0) return void (msg.textContent = 'O time já tem 6 Pokémon. Tire um para trocar.');
@@ -707,14 +818,14 @@ async function desenharDex() {
   $('#dex-titulo').textContent = d.titulo;
   msg.textContent = 'Carregando...';
   let ids;
-  try { ids = await listaDex(d.def); }
+  try { ids = await listaDex(d.def, d.jogo); }
   catch { if (eu === tokenDex) { g.replaceChildren(); msg.textContent = 'Não consegui carregar a Pokédex agora. Confira a internet e troque a versão para tentar de novo.'; } return; }
   if (eu !== tokenDex) return;
   const q = sem($('#dex-q').value.trim());
-  const lista = ids.filter(id => !q || sem(bonito(ESP[id] || '')).includes(q) || String(id) === q);
+  const lista = ids.filter(id => !q || sem(nomeDe(id)).includes(q) || String(id) === q);
   g.replaceChildren(...lista.map(id => {
     const t = el('button', 'tile'), im = new Image();
-    t.type = 'button'; t.dataset.id = id; t.title = `${nomeDe(id)} (Nº ${id})`;
+    t.type = 'button'; t.dataset.id = id; t.title = id > 10000 ? nomeDe(id) : `${nomeDe(id)} (Nº ${id})`;
     im.src = SPRITE(id); im.alt = ''; im.loading = 'lazy';
     t.append(im, el('span', null, nomeDe(id)));
     t.onclick = () => adicionar(id);
@@ -744,14 +855,20 @@ function campoExtra() {
   }
   c.id = 'ed-extra-campo';
   box.append(c);
+  const podeNz = k === 'liga';
+  $('#ed-nz-l').hidden = !podeNz;
+  if (!podeNz) $('#ed-nz').checked = false;
+  desenharCem();
   if (!COMP[k]) SLOTS.forEach(s => { if (s) s.mvp = false; });
   desenharSlots(); desenharDex();
 }
 
 function montarEditor() {
   const s = $('#ed-trofeu');
-  Object.keys(COMP).forEach(k => { const t = D.trofeus.find(x => x.id === k); if (t) s.append(new Option(t.nome, k)); });
+  Object.keys(COMP).filter(k => !k.endsWith('-nuzlocke')).forEach(k => { const t = D.trofeus.find(x => x.id === k); if (t) s.append(new Option(t.nome, k)); });
   s.onchange = () => { $('#dex-todos').checked = false; campoExtra(); };
+  $('#ed-nz').onchange = () => { SLOTS.forEach(o => { if (o && !COMP[chaveEf()]) o.mvp = false; }); desenharCem(); desenharSlots(); };
+  document.querySelectorAll('#dex-alvo button').forEach(b => { b.onclick = () => { alvoDex = b.dataset.alvo; desenharCem(); }; });
   $('#dex-q').oninput = desenharDex;
   $('#dex-todos').onchange = desenharDex;
   $('#ed-salvar').onclick = salvarTime;
@@ -762,22 +879,26 @@ function montarEditor() {
 }
 
 async function salvarTime() {
-  const msg = $('#ed-msg'), k = $('#ed-trofeu').value, v = $('#ed-extra-campo').value.trim();
-  const ed = { craft: 'Copa Craft', pokerogue: 'Copa PokéRogue' }[k];
-  const nome = ed ? `${ed}: ${v}ª edição` : k === 'medalha' ? 'Pokémon Legends: Z-A' : v && (/^pok[eé]mon\b/i.test(v) ? v : `Pokémon ${v}`);
+  const msg = $('#ed-msg'), kb = $('#ed-trofeu').value, k = chaveEf(), nz = nuzOn(), v = $('#ed-extra-campo').value.trim();
+  const ed = { craft: 'Copa Craft', pokerogue: 'Copa PokéRogue' }[kb];
+  let base = ed ? `${ed}: ${v}ª edição` : kb === 'medalha' ? 'Pokémon Legends: Z-A' : v && (/^pok[eé]mon\b/i.test(v) ? v : `Pokémon ${v}`);
+  if (!base) return void (msg.textContent = 'Escolha o jogo (versão).');
+  if (nz) base += NZ;
   const cheio = SLOTS.filter(Boolean), time = cheio.map(s => s.id), apelidos = {}, extras = [];
   cheio.forEach(s => {
     if (s.ap && s.ap.trim()) apelidos[s.id] = s.ap.trim();
     if (s.mvp && COMP[k]) extras.push({ pokemon: s.id, trofeu: COMP[k] });
   });
-  if (!nome) return void (msg.textContent = 'Escolha o jogo (versão).');
   if (!time.length) return void (msg.textContent = 'Adicione pelo menos um Pokémon.');
-  if (D.jogos.some(j => j.nome === nome && !(edit && j.id === edit.id))) return void (msg.textContent = `Já existe: ${nome}.`);
+  const nome = nomeLivre(base, edit && edit.nome);
+  if (!nome) return void (msg.textContent = `Você já tem ${MAX_TIMES} times em ${base}. Edite ou exclua um deles.`);
   const mvps = Object.values(COMP);
   const novo = { nome, trofeu: k, time, apelidos, extras: [...(edit ? (edit.extras || []).filter(e => !mvps.includes(e.trofeu)) : []), ...extras] };
+  if (nz) novo.caidos = CEM.map(c => ({ id: c.id, ...(c.ap && c.ap.trim() ? { ap: c.ap.trim() } : {}) }));
+  else if (edit && edit.caidos) novo.caidos = [];
   msg.textContent = 'Salvando...';
   const r = edit ? await sb.from('jogos').update(novo).eq('id', edit.id) : await sb.from('jogos').insert({ ...novo, user_id: USER.id });
-  if (r.error) return void (msg.textContent = r.error.message);
+  if (r.error) return void (msg.textContent = /caidos/.test(r.error.message) ? 'Falta rodar o SQL novo no Supabase (veja o README).' : r.error.message);
   sairEdicao(); limparForm();
   await abrirPerfil(ALVO.username, nome);
 }
@@ -793,10 +914,10 @@ function montarLegenda() {
 }
 
 function limparForm() {
-  SLOTS = Array(6).fill(null);
-  $('#dex-q').value = ''; $('#dex-todos').checked = false;
+  SLOTS = Array(6).fill(null); CEM = [];
+  $('#dex-q').value = ''; $('#dex-todos').checked = false; $('#ed-nz').checked = false;
   $('#ed-msg').textContent = '';
-  desenharSlots(); marcarDex();
+  campoExtra(); marcarDex();
 }
 
 function sairEdicao() {
@@ -813,19 +934,22 @@ function editar(j) {
   $('#ed-salvar').textContent = 'Salvar alterações';
   $('#ed-cancelar').hidden = false;
   $('#ed-msg').textContent = ''; $('#dex-q').value = ''; $('#dex-todos').checked = false;
-  $('#ed-trofeu').value = j.trofeu;
+  const nz = /-nuzlocke$/.test(j.trofeu), kb = j.trofeu.replace('-nuzlocke', '');
+  $('#ed-trofeu').value = kb;
   SLOTS = Array(6).fill(null);
+  CEM = (j.caidos || []).map(c => ({ id: c.id, ap: c.ap || '' }));
   campoExtra();
-  const f = $('#ed-extra-campo'), m = /(\d+)ª edição$/.exec(j.nome);
+  $('#ed-nz').checked = nz;
+  const f = $('#ed-extra-campo'), nome = baseDe(j.nome).replace(new RegExp(NZ + '$'), ''), m = /(\d+)ª edição$/.exec(nome);
   if (m) f.value = m[1];
-  else if (j.trofeu === 'liga') {
-    const g = j.nome.replace(/^Pokémon /, '');
+  else if (kb === 'liga') {
+    const g = nome.replace(/^Pokémon /, '');
     if (![...f.options].some(o => o.value === g)) f.append(new Option(g, g));
     f.value = g;
   }
   const mvp = (j.extras || []).find(e => e.trofeu === COMP[j.trofeu]);
   j.time.slice(0, 6).forEach((id, i) => { SLOTS[i] = { id, ap: (j.apelidos || {})[id] || '', mvp: !!mvp && mvp.pokemon === id }; });
-  desenharSlots(); desenharDex();
+  desenharCem(); desenharSlots(); desenharDex();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -842,7 +966,7 @@ async function importar(e) {
   try {
     const base = JSON.parse(await f.text());
     const tem = new Set(D.jogos.map(j => j.nome));
-    const novos = (base.jogos || []).filter(j => !tem.has(j.nome)).map(j => ({ user_id: USER.id, nome: j.nome, trofeu: j.trofeu, time: j.time, apelidos: j.apelidos || {}, extras: j.extras || [] }));
+    const novos = (base.jogos || []).filter(j => !tem.has(j.nome)).map(j => ({ user_id: USER.id, nome: j.nome, trofeu: j.trofeu, time: j.time, apelidos: j.apelidos || {}, extras: j.extras || [], ...(j.caidos ? { caidos: j.caidos } : {}) }));
     if (novos.length) { const r = await sb.from('jogos').insert(novos); if (r.error) throw r.error; }
     const ind = (base.individuais || []).map(x => ({ user_id: USER.id, pokemon: x.pokemon, trofeu: x.trofeu, quantidade: x.quantidade || 1 }));
     if (ind.length && !D.individuais.length) { const r = await sb.from('individuais').insert(ind); if (r.error) throw r.error; }
@@ -866,13 +990,14 @@ let sb = null, TROFEUS = [], USER = null, MEU = null, ALVO = null, SEGUINDO = ne
 const dono = () => !!(USER && ALVO && USER.id === ALVO.id);
 const ver = id => ['v-config', 'v-entrada', 'v-criar', 'v-nao', 'v-perfil'].forEach(v => { $('#' + v).hidden = v !== id; });
 
-function selo() {
-  const b = el('span', 'selo'), im = new Image();
-  b.dataset.nome = 'Beta tester'; b.tabIndex = 0; b.title = 'Beta tester';
-  im.src = 'img/beta.png'; im.alt = 'Beta tester';
+function selo(n) {
+  const b = el('span', 'selo' + (n === 2 ? ' s2' : '')), im = new Image(), nome = 'Beta tester ' + n;
+  b.dataset.nome = nome; b.tabIndex = 0; b.title = nome;
+  im.src = n === 2 ? 'img/beta2.png' : 'img/beta.png'; im.alt = nome;
   b.append(im);
   return b;
 }
+const selos = p => [p.beta ? selo(1) : null, p.beta2 ? selo(2) : null].filter(Boolean);
 
 function avatar(p, pequeno) {
   const a = el('span', 'avatar' + (pequeno ? ' p' : ''));
@@ -910,7 +1035,7 @@ function cabecalho() {
   const c = $('#cab'), tx = el('div'), ac = el('div', 'cab-acoes'), link = el('button', null, 'Copiar link');
   c.replaceChildren();
   const h1 = el('h1', null, ALVO.nome || ALVO.username);
-  if (ALVO.beta) h1.append(selo());
+  h1.append(...selos(ALVO));
   tx.append(h1, el('p', null, '@' + ALVO.username));
   link.onclick = () => navigator.clipboard.writeText(location.href.split('#')[0] + '#/u/' + ALVO.username).then(() => { link.textContent = 'Link copiado'; setTimeout(() => { link.textContent = 'Copiar link'; }, 1500); });
   const cb = el('button', null, 'Compartilhar cartão'); cb.onclick = cartao;
@@ -927,14 +1052,15 @@ async function listarSeguindo() {
   aviso.hidden = ids.length > 0;
   if (!ids.length) return;
   // a coluna "beta" só existe depois de rodar o SQL novo; sem ela, busca sem o selo
-  let r = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
+  let r = await sb.from('perfis').select('id,username,nome,foto_url,beta,beta2').in('id', ids);
+  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
   if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url').in('id', ids);
   if (r.error) { aviso.textContent = 'Não consegui carregar a lista: ' + r.error.message; aviso.hidden = false; return; }
   (r.data || []).forEach(p => {
     const li = el('li'), a = el('a');
     a.href = '#/u/' + p.username;
     const nm = el('span', null, `${p.nome || p.username} (@${p.username})`);
-    if (p.beta) nm.append(selo());
+    nm.append(...selos(p));
     a.append(avatar(p, true), nm);
     li.append(a);
     ul.append(li);
@@ -1029,6 +1155,13 @@ async function carregarMeu() {
   MEU = null; SEGUINDO = new Set();
   if (!USER) return;
   MEU = (await sb.from('perfis').select('*').eq('id', USER.id).maybeSingle()).data;
+  // quem já tem conta ganha o selo Beta tester 2 só de entrar (a função só existe depois do SQL novo)
+  if (MEU && !MEU.beta2) {
+    try {
+      const g = await sb.rpc('ganhar_beta2');
+      if (!g.error) { const n = await sb.from('perfis').select('*').eq('id', USER.id).maybeSingle(); if (n.data) MEU = n.data; }
+    } catch {}
+  }
   SEGUINDO = new Set(((await sb.from('seguindo').select('seguido').eq('seguidor', USER.id)).data || []).map(x => x.seguido));
 }
 

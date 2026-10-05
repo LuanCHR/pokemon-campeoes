@@ -73,7 +73,7 @@ create policy "fotos: apagar" on storage.objects for delete to authenticated usi
 -- Selo: quem cria o perfil enquanto o padrao for true recebe o selo. Quando a beta acabar, rode:
 --   alter table perfis alter column beta set default false;
 alter table perfis add column if not exists destaque text;
-alter table perfis add column if not exists beta boolean not null default true;
+alter table perfis add column if not exists beta boolean not null default false;
 
 -- Permissões da API (obrigatório em projetos criados depois de 30/05/2026:
 -- tabelas novas não ficam liberadas automaticamente para o site).
@@ -86,3 +86,15 @@ grant update (nome, foto_url, destaque) on public.perfis to authenticated;
 grant insert, update, delete on public.jogos, public.individuais to authenticated;
 grant select, insert, delete on public.seguindo to authenticated;
 grant usage, select on all sequences in schema public to authenticated;
+-- Selo "Beta tester 2" e novos times Nuzlocke (cemitério)
+alter table perfis add column if not exists beta2 boolean not null default false;
+alter table perfis alter column beta set default false;   -- contas novas não ganham mais o Beta tester 1
+alter table jogos  add column if not exists caidos jsonb not null default '[]';
+
+-- Quem entra no site ganha o Beta tester 2 (o próprio usuário só consegue marcar a si mesmo)
+create or replace function ganhar_beta2() returns void
+language sql security definer set search_path = public as $$
+  update perfis set beta2 = true where id = auth.uid();
+$$;
+revoke all on function ganhar_beta2() from public, anon;
+grant execute on function ganhar_beta2() to authenticated;
