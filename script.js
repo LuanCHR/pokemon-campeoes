@@ -623,7 +623,10 @@ function palco(i) {
     const lista = el('div', 'cem-lista');
     j.caidos.forEach(c => {
       const m = el('div', 'cem-item');
-      m.append(sprite(c.id, CN[c.id] || ''), el('strong', null, c.ap || CN[c.id] || '#' + c.id));
+      const tm = D.trofeus.find(y => y.id === 'medalha-nuzlocke'), fig = el('span', 'cem-fig');
+      fig.append(sprite(c.id, CN[c.id] || ''));
+      if (tm) { const md = new Image(); md.className = 'cem-medalha'; md.alt = tm.nome; md.title = tm.nome; md.src = tm.imagem; fig.append(md); }
+      m.append(fig, el('strong', null, c.ap || CN[c.id] || '#' + c.id));
       if (c.ap) m.append(el('small', null, CN[c.id] || ''));
       lista.append(m);
     });
@@ -953,8 +956,22 @@ function editar(j) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+function confirmar(msg, rotulo) {
+  const d = $('#dlg-conf');
+  $('#conf-titulo').textContent = rotulo || 'Confirmar';
+  $('#conf-msg').textContent = msg;
+  $('#conf-sim').textContent = rotulo || 'Confirmar';
+  return new Promise(ok => {
+    const fim = v => { d.close(); ok(v); };
+    $('#conf-sim').onclick = () => fim(true);
+    $('#conf-nao').onclick = () => fim(false);
+    d.oncancel = () => ok(false);
+    d.showModal();
+  });
+}
+
 async function excluir(j) {
-  if (!confirm(`Excluir "${j.nome}"? Essa ação não pode ser desfeita.`)) return;
+  if (!await confirmar(`Excluir "${j.nome}"? Essa ação não pode ser desfeita.`, 'Excluir time')) return;
   const r = await sb.from('jogos').delete().eq('id', j.id);
   if (r.error) return void alert(r.error.message);
   await abrirPerfil(ALVO.username);
@@ -1027,8 +1044,17 @@ function botaoSeguir() {
     if (SEGUINDO.has(ALVO.id)) { await sb.from('seguindo').delete().eq('seguidor', USER.id).eq('seguido', ALVO.id); SEGUINDO.delete(ALVO.id); }
     else { await sb.from('seguindo').insert({ seguidor: USER.id, seguido: ALVO.id }); SEGUINDO.add(ALVO.id); }
     pinta();
+    cabecalhoContagem();
   };
   return b;
+}
+
+async function cabecalhoContagem() {
+  const n = await contagens(), cont = document.querySelector('#cab .contagens');
+  if (!cont || !n) return;
+  const bt = (v, rot, tipo) => { const b = el('button', null); b.type = 'button'; b.append(el('strong', null, v), ' ' + rot); b.onclick = () => abrirPessoas(tipo); return b; };
+  cont.replaceChildren(bt(n.seguidores, n.seguidores === 1 ? 'seguidor' : 'seguidores', 'seguidores'), bt(n.seguindo, 'seguindo', 'seguindo'));
+  cont.hidden = false;
 }
 
 function cabecalho() {
@@ -1036,7 +1062,10 @@ function cabecalho() {
   c.replaceChildren();
   const h1 = el('h1', null, ALVO.nome || ALVO.username);
   h1.append(...selos(ALVO));
-  tx.append(h1, el('p', null, '@' + ALVO.username));
+  const cont = el('p', 'contagens');
+  cont.hidden = true;
+  tx.append(h1, el('p', null, '@' + ALVO.username), cont);
+  if (USER) cabecalhoContagem();
   link.onclick = () => navigator.clipboard.writeText(location.href.split('#')[0] + '#/u/' + ALVO.username).then(() => { link.textContent = 'Link copiado'; setTimeout(() => { link.textContent = 'Copiar link'; }, 1500); });
   const cb = el('button', null, 'Compartilhar cartão'); cb.onclick = cartao;
   ac.append(link, cb);
@@ -1045,26 +1074,57 @@ function cabecalho() {
   c.append(avatar(ALVO), tx, ac);
 }
 
+async function buscarPerfis(ids) {
+  // as colunas beta/beta2 só existem depois do SQL novo; sem elas, busca sem os selos
+  let r = await sb.from('perfis').select('id,username,nome,foto_url,beta,beta2').in('id', ids);
+  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
+  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url').in('id', ids);
+  return r;
+}
+
+function linhaPessoa(p, aoClicar) {
+  const li = el('li'), a = el('a');
+  a.href = '#/u/' + p.username;
+  if (aoClicar) a.onclick = aoClicar;
+  const nm = el('span', null, `${p.nome || p.username} (@${p.username})`);
+  nm.append(...selos(p));
+  a.append(avatar(p, true), nm);
+  li.append(a);
+  return li;
+}
+
 async function listarSeguindo() {
   const ul = $('#seg-lista'), ids = [...SEGUINDO], aviso = $('#seg-vazio');
   ul.replaceChildren();
   aviso.textContent = 'Você ainda não segue ninguém. Para achar alguém, peça o link do perfil da pessoa.';
   aviso.hidden = ids.length > 0;
   if (!ids.length) return;
-  // a coluna "beta" só existe depois de rodar o SQL novo; sem ela, busca sem o selo
-  let r = await sb.from('perfis').select('id,username,nome,foto_url,beta,beta2').in('id', ids);
-  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url,beta').in('id', ids);
-  if (r.error) r = await sb.from('perfis').select('id,username,nome,foto_url').in('id', ids);
+  const r = await buscarPerfis(ids);
   if (r.error) { aviso.textContent = 'Não consegui carregar a lista: ' + r.error.message; aviso.hidden = false; return; }
-  (r.data || []).forEach(p => {
-    const li = el('li'), a = el('a');
-    a.href = '#/u/' + p.username;
-    const nm = el('span', null, `${p.nome || p.username} (@${p.username})`);
-    nm.append(...selos(p));
-    a.append(avatar(p, true), nm);
-    li.append(a);
-    ul.append(li);
-  });
+  (r.data || []).forEach(p => ul.append(linhaPessoa(p)));
+}
+
+/* ===== seguidores e seguindo de qualquer perfil ===== */
+async function contagens() {
+  const q = c => sb.from('seguindo').select('*', { count: 'exact', head: true }).eq(c, ALVO.id);
+  const [a, b] = await Promise.all([q('seguido'), q('seguidor')]);
+  return a.error || b.error ? null : { seguidores: a.count || 0, seguindo: b.count || 0 };
+}
+
+async function abrirPessoas(tipo) {
+  const d = $('#dlg-pessoas'), ul = $('#pes-lista'), vz = $('#pes-vazio');
+  $('#pes-titulo').textContent = (tipo === 'seguidores' ? 'Seguidores de ' : 'Quem segue: ') + (ALVO.nome || ALVO.username);
+  ul.replaceChildren(); vz.hidden = false; vz.textContent = 'Carregando...';
+  d.showModal();
+  const col = tipo === 'seguidores' ? 'seguidor' : 'seguido', fil = tipo === 'seguidores' ? 'seguido' : 'seguidor';
+  const r = await sb.from('seguindo').select(col).eq(fil, ALVO.id);
+  if (r.error) { vz.textContent = 'Não consegui carregar a lista: ' + r.error.message; return; }
+  const ids = (r.data || []).map(x => x[col]);
+  if (!ids.length) { vz.textContent = tipo === 'seguidores' ? 'Ninguém segue esta pessoa ainda.' : 'Esta pessoa ainda não segue ninguém.'; return; }
+  const p = await buscarPerfis(ids);
+  if (p.error) { vz.textContent = 'Não consegui carregar a lista: ' + p.error.message; return; }
+  vz.hidden = true;
+  (p.data || []).forEach(x => ul.append(linhaPessoa(x, () => d.close())));
 }
 
 async function abrirPerfil(username, ir) {
@@ -1124,11 +1184,11 @@ function iniciarCorte() {
   c.addEventListener('pointerup', solta); c.addEventListener('pointercancel', solta);
   c.addEventListener('wheel', e => { if (!CORTE.img) return; e.preventDefault(); const z = $('#k-zoom'); z.value = Math.max(1, Math.min(4, +z.value - e.deltaY / 400)); z.oninput(); }, { passive: false });
   $('#k-zoom').oninput = e => { CORTE.z = +$('#k-zoom').value; desenharCorte(); };
-  $('#k-foto').onchange = e => { const f = e.target.files[0]; if (f) carregarFoto(f); else { CORTE.img = null; $('#k-corte').hidden = true; } };
+  $('#k-foto').onchange = e => { const f = e.target.files[0]; $('#k-foto-nome').textContent = f ? f.name : 'Nenhuma foto escolhida'; if (f) carregarFoto(f); else { CORTE.img = null; $('#k-corte').hidden = true; } };
 }
 
 function abrirConta() {
-  $('#k-nome').value = MEU.nome || ''; $('#k-foto').value = ''; $('#k-msg').textContent = ''; CORTE.img = null; $('#k-corte').hidden = true;
+  $('#k-nome').value = MEU.nome || ''; $('#k-foto').value = ''; $('#k-foto-nome').textContent = 'Nenhuma foto escolhida'; $('#k-msg').textContent = ''; CORTE.img = null; $('#k-corte').hidden = true;
   $('#dlg-conta').showModal();
 }
 
@@ -1328,3 +1388,6 @@ async function rota() {
   });
   window.onhashchange = rota;
 })();
+
+$('#pes-x').onclick = () => $('#dlg-pessoas').close();
+$('#dlg-pessoas').onclick = e => { if (e.target === $('#dlg-pessoas')) $('#dlg-pessoas').close(); };

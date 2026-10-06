@@ -177,11 +177,22 @@
 </dialog>
 <datalist id="lista-pokemon"></datalist>
 <dialog id="perfil"></dialog>
+<dialog id="dlg-conf" class="conf">
+  <h3 id="conf-titulo">Confirmar</h3>
+  <p id="conf-msg"></p>
+  <p class="conf-acoes"><button type="button" id="conf-nao" class="pill">Cancelar</button> <button type="button" id="conf-sim" class="pill perigo">Excluir</button></p>
+</dialog>
+<dialog id="dlg-pessoas" class="pessoas">
+  <button class="fechar" id="pes-x" aria-label="Fechar">×</button>
+  <h3 id="pes-titulo">Seguidores</h3>
+  <ul id="pes-lista"></ul>
+  <p id="pes-vazio" class="mut" hidden></p>
+</dialog>
 <dialog id="dlg-conta">
   <h3>Editar perfil</h3>
   <p><input id="k-nome" placeholder="Nome de exibição"></p>
   <p class="mut">Foto de perfil. Escolha a imagem e ajuste o enquadramento.</p>
-  <p><input id="k-foto" type="file" accept="image/*"></p>
+  <p class="foto-pick"><label class="bt-arq" for="k-foto"><i></i>Escolher foto</label><input id="k-foto" type="file" accept="image/*" hidden><span id="k-foto-nome" class="mut">Nenhuma foto escolhida</span></p>
   <div id="k-corte" hidden><canvas id="k-canvas" width="256" height="256"></canvas><p class="mut">Arraste a foto para posicionar e use o controle para aproximar.</p><input id="k-zoom" type="range" min="1" max="4" step="0.01" value="1" aria-label="Zoom"></div>
   <p><button id="k-salvar" class="ed-btn">Salvar</button> <button id="k-fechar" class="link">Cancelar</button> <span id="k-msg"></span></p>
 </dialog>

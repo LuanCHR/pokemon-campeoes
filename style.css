@@ -424,3 +424,31 @@ body{background:linear-gradient(180deg,#0a2a63 0,#061a3d 460px,#04122e 100%) no-
 .seletor-time button{width:34px;height:34px;border-radius:50%;border:1px solid var(--linha);background:var(--card);color:var(--mut);font:800 15px Nunito,sans-serif;cursor:pointer;transition:.2s}
 .seletor-time button:hover{border-color:var(--realce);color:var(--realce)}
 .seletor-time button[aria-pressed=true]{background:var(--azul);border-color:var(--azul);color:#fff}
+.cem-fig{position:relative;display:inline-block}
+.cem-medalha{position:absolute;right:-8px;bottom:-2px;width:26px;height:26px;object-fit:contain;filter:drop-shadow(0 1px 2px #000a)}
+
+/* ===== contagens, confirmação, escolher foto, lista de pessoas ===== */
+.contagens{display:flex;gap:16px;margin:6px 0 0}
+.contagens button{background:none;border:0;padding:0;color:var(--mut);font:600 14px Nunito,sans-serif;cursor:pointer}
+.contagens button strong{color:var(--ink);font-weight:800}
+.contagens button:hover{color:var(--realce)}
+.pill{font:800 14px Nunito,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--linha);border-radius:999px;padding:9px 20px;cursor:pointer;transition:.2s}
+.pill:hover{border-color:var(--realce)}
+.pill.perigo{background:#b3261e;border-color:#b3261e;color:#fff}
+.pill.perigo:hover{background:#d0342b;border-color:#d0342b}
+.conf{width:min(400px,calc(100% - 24px))}
+.conf h3{margin:0 0 8px;font-size:17px}
+.conf p{margin:0 0 6px;color:var(--ink);line-height:1.5}
+.conf-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:18px!important}
+.bt-arq{display:inline-flex;align-items:center;gap:8px;font:800 14px Nunito,sans-serif;color:var(--ink);background:var(--card);border:1px solid var(--linha);border-radius:999px;padding:9px 20px;cursor:pointer;transition:.2s}
+.bt-arq:hover{border-color:var(--realce);color:var(--realce)}
+.bt-arq i{width:16px;height:16px;border:2px solid currentColor;border-radius:4px;position:relative;box-sizing:border-box}
+.bt-arq i::after{content:"+";position:absolute;inset:-3px 0 0 0;text-align:center;font:800 13px/16px Nunito,sans-serif;font-style:normal}
+.foto-pick{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pessoas{width:min(460px,calc(100% - 24px))}
+.pessoas h3{margin:0 0 12px;font-size:17px;color:var(--ink)}
+.pessoas .fechar{position:absolute;right:14px;top:12px}
+#pes-lista{list-style:none;padding:0;margin:0;display:grid;gap:8px;max-height:60vh;overflow:auto}
+#pes-lista a{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--linha);border-radius:12px;background:var(--card);color:var(--ink);text-decoration:none;font-weight:800}
+#pes-lista a:hover{border-color:var(--realce)}
+#pes-lista .selo img{width:16px;height:16px}

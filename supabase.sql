@@ -58,7 +58,7 @@ create policy "individuais: editar" on individuais for update to authenticated u
 create policy "individuais: apagar" on individuais for delete to authenticated using (user_id = auth.uid());
 
 -- Seguir: cada pessoa só vê e mexe na própria lista.
-create policy "seguindo: ver os proprios" on seguindo for select to authenticated using (seguidor = auth.uid());
+create policy "seguindo: ver listas" on seguindo for select to authenticated using (true);
 create policy "seguindo: seguir" on seguindo for insert to authenticated with check (seguidor = auth.uid());
 create policy "seguindo: deixar de seguir" on seguindo for delete to authenticated using (seguidor = auth.uid());
 
