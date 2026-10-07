@@ -5,7 +5,7 @@ Um site onde você cria seu perfil, registra os times que zeraram seus jogos de 
 **Site:** https://luanchr.github.io/pokemon-campeoes/
 
 > **Aviso importante: não levo isso a sério.**
-> Isso nasceu como um projeto de diversão para mim e meus amigos, para a gente parar de perder a conta de quem zerou o quê, com qual time e com qual apelido (o Snorlax "Mc Ryan" merece ser lembrado). Não é um produto, não tem pretensão de virar empresa e não tem garantia de nada. Se o projeto pausar, quebrar ou mudar, é porque fui jogar. Se for útil para você também, ótimo.
+> Isso nasceu como um projeto de diversão para mim e meus amigos, para a gente parar de perder a conta de quem zerou o quê, com qual time e com qual apelido (o Snorlax "Mc Ryan" merece ser lembrado). Não é um produto, não tem pretensão de virar empresa e não tem garantia de nada. Se for útil para você também, ótimo.
 
 ## O que dá para fazer
 
@@ -32,9 +32,8 @@ Alguns pontos que me deram trabalho e que eu curti resolver:
 - **Segurança de verdade no banco:** regras RLS para cada pessoa só mexer no que é dela, limites e validações no próprio Postgres (a regra dos 3 times por jogo não depende do navegador), foto restrita ao Storage do projeto e política de segurança de conteúdo (CSP) no site.
 - **Cartão de perfil gerado em canvas**, com sprites em escala exata para os pixels não borrarem.
 - **Recuperação de senha, validação de formulários e mensagens de erro em português** para quem não é da área.
-- **Design:** várias rodadas para o site deixar de parecer "feito por IA": menos caixas, menos brilho, mais respiro.
-
-Esse projeto também foi construído com ajuda de IA (Claude): eu defini o que queria, revisei, testei com os amigos e fui decidindo o rumo.
+  
+Esse projeto também foi construído com ajuda de IA (Claude e GPT): Ajudaram a fazer o design dos troféus, medalhas e insígnias. Além de que o Claude ajudou com sugestões e ele criou o cartão de perfil.
 
 ## Rodar no seu computador
 
