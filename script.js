@@ -58,7 +58,7 @@ function sprite(id, nome) {
   const i = new Image();
   i.className = 'spr';
   i.alt = nome;
-  i.loading = 'lazy';
+  i.loading = 'lazy'; i.decoding = 'async';
   i.src = SPRITE(id);
   return i;
 }
@@ -334,7 +334,7 @@ function inicio() {
   j.time.forEach(id => {
     const p = M[id], ap = (j.apelidos || {})[id], m = el('div', 'membro' + (mvp === id ? ' mvp' : ''));
     if (mvp === id) { const co = el('span', 'coroa'), im = new Image(); im.src = 'img/mvp.png'; im.alt = 'MVP'; co.append(im); m.append(co); }
-    const arte = new Image(); arte.className = 'arte'; arte.alt = p ? p.nome : '';
+    const arte = new Image(); arte.className = 'arte'; arte.decoding = 'async'; arte.alt = p ? p.nome : '';
     arte.onerror = () => { arte.onerror = null; arte.src = SPRITE(id); };
     arte.src = ARTE(id);
     m.append(arte, el('b', null, ap || (p ? p.nome : '#' + id)), el('small', null, ap && p ? p.nome : '#' + id));
@@ -343,11 +343,11 @@ function inicio() {
   });
   const top = $('#top3');
   top.replaceChildren();
-  P.slice(0, 3).forEach((p, i) => {
-    const c = el('div', 'c ' + ['o', 'p', 'b'][i]), im = new Image(), tx = el('div');
-    im.src = SPRITE(p.id); im.alt = p.nome;
-    tx.append(el('b', null, `${i + 1}º ${p.nome}`), el('br'), el('small', null, `${p.total} ${p.total === 1 ? 'título' : 'títulos'}`));
-    c.append(im, tx);
+  const ordem = [1, 0, 2].filter(i => P[i]);
+  ordem.forEach(i => {
+    const p = P[i], c = el('div', 'pod ' + ['o', 'p', 'b'][i]), im = new Image();
+    im.src = ARTE(p.id); im.alt = p.nome; im.onerror = () => { im.onerror = null; im.src = SPRITE(p.id); };
+    c.append(im, el('b', null, p.nome), el('small', null, `${p.total} ${p.total === 1 ? 'título' : 'títulos'}`), el('span', 'degrau', `${i + 1}º`));
     c.onclick = () => abrir(p);
     top.append(c);
   });
@@ -637,13 +637,14 @@ function palco(i) {
 }
 
 function aba(n) {
-  ['inicio', 'ranking', 'estatisticas', 'times', 'editar', 'seguindo'].forEach(k => {
+  ['inicio', 'ranking', 'estatisticas', 'insignias', 'times', 'editar', 'seguindo'].forEach(k => {
     $('#' + k + '-secao').hidden = k !== n;
     document.querySelector(`[data-aba=${k}]`).setAttribute('aria-selected', k === n);
   });
   if (n === 'times' && D && D.jogos.length) palco(atual);
   if (n === 'seguindo') listarSeguindo();
   if (n === 'estatisticas') graficos();
+  if (n === 'insignias') insignias();
 }
 document.querySelectorAll('[data-aba]').forEach(b => b.onclick = () => aba(b.dataset.aba));
 document.addEventListener('keydown', e => {
@@ -1391,3 +1392,37 @@ async function rota() {
 
 $('#pes-x').onclick = () => $('#dlg-pessoas').close();
 $('#dlg-pessoas').onclick = e => { if (e.target === $('#dlg-pessoas')) $('#dlg-pessoas').close(); };
+
+/* ===== insígnias (maletinha) ===== */
+const INSIGNIAS = [
+  ['primeiro-time', 'Primeiro time', 'Complete seu primeiro time oficial.', d => d.jogos.length >= 1],
+  ['liga', 'Campeão de liga', 'Registre um time campeão de liga.', d => d.jogos.some(j => /^liga/.test(j.trofeu))],
+  ['craft', 'Campeão da Copa Craft', 'Registre um time da Copa Craft.', d => d.jogos.some(j => j.trofeu === 'craft')],
+  ['pokerogue', 'Campeão do PokéRogue', 'Registre um time do PokéRogue.', d => d.jogos.some(j => j.trofeu === 'pokerogue')],
+  ['mvp', 'MVP', 'Marque um MVP em algum time.', d => { const set = new Set(Object.values(COMP).filter(Boolean)); return d.jogos.some(j => (j.extras || []).some(e => set.has(e.trofeu))); }],
+  ['nuzlocke', 'Nuzlocke', 'Registre seu primeiro time Nuzlocke.', d => d.jogos.some(j => /-nuzlocke$/.test(j.trofeu))],
+  ['colecionador', 'Colecionador', 'Registre 20 Pokémon diferentes.', () => P.length >= 20, () => `${Math.min(P.length, 20)}/20`],
+  ['social', 'Social', 'Siga 5 pessoas ou seja seguido por 5.', (d, c) => !!c && (c.seguidores >= 5 || c.seguindo >= 5), (d, c) => c ? `${Math.min(Math.max(c.seguidores, c.seguindo), 5)}/5` : '']
+];
+
+async function insignias() {
+  const box = $('#estojo');
+  const c = USER ? await contagens().catch(() => null) : null;
+  box.replaceChildren();
+  let n = 0;
+  INSIGNIAS.forEach(([id, nome, regra, ok, prog]) => {
+    const ganha = ok(D, c);
+    if (ganha) n++;
+    const slot = el('div', 'ins' + (ganha ? ' on' : ''));
+    slot.setAttribute('role', 'listitem');
+    slot.tabIndex = 0;
+    slot.title = ganha ? nome : `${nome}: ${regra}`;
+    const disco = el('div', 'disco'), im = new Image();
+    im.src = `img/insignias/${id}.png`; im.alt = ''; im.loading = 'lazy';
+    disco.append(im);
+    const p = !ganha && prog ? prog(D, c) : '';
+    slot.append(disco, el('b', null, nome), el('small', null, ganha ? 'Conquistada' : regra + (p ? ` (${p})` : '')));
+    box.append(slot);
+  });
+  $('#ins-resumo').textContent = `${n} de ${INSIGNIAS.length} insígnias conquistadas`;
+}

@@ -12,7 +12,17 @@
 <meta name="description" content="Registre os times que zeraram suas ligas e copas Pokémon e descubra qual Pokémon você mais usou.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Meus campeões Pokémon">
+<meta property="og:title" content="Meus campeões Pokémon">
+<meta property="og:description" content="Registre seus times campeões, suba no ranking e conquiste insígnias. Veja o meu perfil!">
+<meta property="og:url" content="https://luanchr.github.io/pokemon-campeoes/">
+<meta property="og:image" content="https://luanchr.github.io/pokemon-campeoes/img/preview.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://luanchr.github.io/pokemon-campeoes/img/preview.png">
+<link rel="stylesheet" href="style.css?v=17">
 </head>
 <body>
 <nav class="barra"><a href="#/" class="logo">Meus campeões</a><form id="lupa" class="lupa" autocomplete="off"><button type="button" id="lupa-bt" aria-label="Buscar perfil" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></svg></button><input id="lupa-in" type="text" placeholder="Cole o link do perfil" aria-label="Link ou usuário do perfil" tabindex="-1"></form><span id="barra-acoes"></span></nav>
@@ -83,6 +93,7 @@
       <button data-aba="inicio" aria-selected="true">Início</button>
       <button data-aba="ranking" aria-selected="false">Ranking</button>
       <button data-aba="estatisticas" aria-selected="false">Estatísticas</button>
+      <button data-aba="insignias" aria-selected="false">Insígnias</button>
       <button data-aba="times" aria-selected="false">Times campeões</button>
       <button data-aba="editar" aria-selected="false" hidden>Adicionar</button>
       <button data-aba="seguindo" aria-selected="false" hidden>Seguindo</button>
@@ -96,8 +107,9 @@
           <div class="time" id="d-time"></div>
           <p id="d-msg" class="mut"></p>
         </section>
-        <div class="sec-t"><h3>Top 3 do ranking</h3><button id="d-rank" class="link">Ver ranking completo</button></div>
+        <div class="sec-t sec-centro"><h3>Top 3 do ranking</h3></div>
         <div class="top3" id="top3"></div>
+        <p class="top3-mais"><button id="d-rank" class="link">Ver ranking completo</button></p>
       </div>
       <div id="vazio" class="vazio" hidden>
         <img id="vazio-img" alt="" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png">
@@ -123,6 +135,10 @@
     </section>
     <section id="estatisticas-secao" hidden>
       <div id="est-box" class="est-grade"></div>
+    </section>
+    <section id="insignias-secao" hidden>
+      <p id="ins-resumo" class="ins-resumo"></p>
+      <div class="estojo" id="estojo" role="list"></div>
     </section>
     <section id="times-secao" hidden>
       <div id="linha-tempo"></div>
@@ -198,6 +214,6 @@
 </dialog>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
-<script src="script.js"></script>
+<script src="script.js?v=17"></script>
 </body>
 </html>
