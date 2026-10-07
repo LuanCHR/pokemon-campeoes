@@ -1,32 +1,54 @@
-# Meus campeões Pokémon (com perfis)
+# Meus campeões Pokémon
 
-Site onde cada pessoa cria um perfil, cadastra seus times campeões e vê ranking, times, Pokémon mais usado e perfil de cada Pokémon. Os perfis são acessados por link (`seusite/#/u/nomedeusuario`). Não existe home nem busca: só se chega a alguém pelo link. Dá para seguir pessoas.
+Um site onde você cria seu perfil, registra os times que zeraram seus jogos de Pokémon e acompanha ranking, estatísticas e insígnias, e onde seus amigos podem ver tudo isso por um link.
 
-## Arquivos
-- `index.html`, `style.css`, `script.js`: o site.
-- `config.js`: onde você cola a URL e a chave do Supabase.
-- `supabase.sql`: cria as tabelas, as regras de segurança e a pasta de fotos.
-- `trofeus.json`: lista de troféus e pesos (vale para todos os perfis).
-- `img/trofeus/`: imagens dos troféus. `img/mvp.png`: símbolo do MVP.
-- `dados.json`: seus dados antigos. O site não lê mais esse arquivo; use-o só para importar (passo 8).
+**Site:** https://luanchr.github.io/pokemon-campeoes/
 
-## Parte A: fora do VS Code (no site do Supabase)
-1. Crie uma conta em supabase.com (pode entrar com o GitHub) e clique em **New project**. Escolha um nome, anote a senha do banco e use a região **South America (São Paulo)**. Espere uns 2 minutos.
-2. No menu da esquerda, abra **SQL Editor > New query**. Cole todo o conteúdo de `supabase.sql` e clique em **Run**. Rode só uma vez.
-3. Em **Authentication > Sign In / Providers > Email**, deixe o e-mail ativado. Para testar mais fácil, desligue **Confirm email**. Se deixar ligado, quem criar conta precisa clicar no e-mail de confirmação antes de entrar.
-4. Em **Authentication > URL Configuration**, adicione `http://127.0.0.1:5500` em **Redirect URLs** (é o endereço do Live Server). Depois de publicar, coloque o endereço do GitHub Pages em **Site URL**.
-5. Em **Project Settings > API**, copie a **Project URL** e a chave **anon public**.
+> **Aviso importante: não levo isso a sério.**
+> Isso nasceu como um projeto de diversão para mim e meus amigos, para a gente parar de perder a conta de quem zerou o quê, com qual time e com qual apelido (o Snorlax "Mc Ryan" merece ser lembrado). Não é um produto, não tem pretensão de virar empresa e não tem garantia de nada. Se o projeto pausar, quebrar ou mudar, é porque fui jogar. Se for útil para você também, ótimo.
 
-## Parte B: no VS Code
-6. Substitua os arquivos do projeto pelos deste zip e mantenha a pasta `img` (agora com `mvp.png`).
-7. Abra `config.js` e cole a URL e a chave do passo 5. Nunca use a chave `service_role`.
-8. Abra o site com o Live Server, crie sua conta e escolha o nome de usuário. Depois vá em **Adicionar > Importar arquivo** e escolha o seu `dados.json` antigo. Seus times e títulos entram na sua conta.
+## O que dá para fazer
 
-## Parte C: publicar
-9. Envie tudo para o GitHub, ative o GitHub Pages (Settings > Pages) e atualize o **Site URL** do passo 4.
+- **Perfil por link:** cada pessoa tem uma página própria (`/#/u/usuario`), com foto, selos e contadores de seguidores.
+- **Times campeões:** registre até 3 times por jogo, em ligas, Copa Craft, PokéRogue e Pokémon Legends: Z-A, com apelido e MVP de cada time.
+- **Pokédex de cada jogo:** a lista de Pokémon muda conforme a versão escolhida, inclusive formas regionais (Alola, Galar, Hisui, Paldea) e formas alternativas (como Toxtricity).
+- **Modo Nuzlocke:** o time vai para uma categoria separada, com cemitério para os Pokémon que caíram, troféu próprio e uma medalha para cada baixa.
+- **Ranking e estatísticas:** pontuação por troféu, Pokémon e tipos mais usados, coleção por geração e filtros.
+- **Insígnias:** 8 conquistas numa maletinha, no estilo das insígnias dos jogos.
+- **Social:** seguir amigos, ver quem segue quem e compartilhar um cartão do perfil como imagem.
+- **Selos de beta tester**, para quem entrou nas primeiras versões.
 
-## Observações
-- A chave anon pode ficar no código. Quem protege os dados são as regras do `supabase.sql`: cada pessoa só altera o que é dela.
-- Os perfis são públicos para quem tem o link. A tela não lista ninguém, mas tecnicamente os dados podem ser lidos pela API.
-- No plano gratuito, o Supabase pausa o projeto depois de uns 7 dias sem uso. É só reativar no painel.
-- Para mudar o peso ou o nome de um troféu, edite `trofeus.json`.
+## Como foi feito
+
+| Parte | Tecnologia |
+| --- | --- |
+| Site | HTML, CSS e JavaScript puros, sem framework |
+| Contas, banco e fotos | Supabase: Auth, Postgres com RLS e Storage |
+| Dados dos Pokémon | PokeAPI |
+| Hospedagem | GitHub Pages |
+
+Alguns pontos que me deram trabalho e que eu curti resolver:
+
+- **Segurança de verdade no banco:** regras RLS para cada pessoa só mexer no que é dela, limites e validações no próprio Postgres (a regra dos 3 times por jogo não depende do navegador), foto restrita ao Storage do projeto e política de segurança de conteúdo (CSP) no site.
+- **Cartão de perfil gerado em canvas**, com sprites em escala exata para os pixels não borrarem.
+- **Recuperação de senha, validação de formulários e mensagens de erro em português** para quem não é da área.
+- **Design:** várias rodadas para o site deixar de parecer "feito por IA": menos caixas, menos brilho, mais respiro.
+
+Esse projeto também foi construído com ajuda de IA (Claude): eu defini o que queria, revisei, testei com os amigos e fui decidindo o rumo.
+
+## Rodar no seu computador
+
+1. Crie um projeto grátis em [supabase.com](https://supabase.com).
+2. No **SQL Editor**, cole e rode o arquivo `supabase.sql` (pode repetir sem problema).
+3. Copie `config.js`, coloque a **URL** e a chave **publishable** do projeto (nunca a chave `secret`).
+4. Abra a pasta com o Live Server do VS Code (ou qualquer servidor estático).
+
+Checklist de segurança do painel do Supabase: confirmação de e-mail ligada, senha mínima de 8 caracteres, login anônimo desligado e Redirect URLs só com os endereços que você usa.
+
+## Aviso legal
+
+Projeto feito por fã, sem fins lucrativos e sem relação com Nintendo, Game Freak, Creatures ou The Pokémon Company. Pokémon e os nomes e imagens dos personagens são marcas e propriedade dos respectivos donos. Os dados e sprites vêm da [PokeAPI](https://pokeapi.co). Se algo aqui incomodar os donos dos direitos, é só falar que eu tiro do ar.
+
+---
+
+Feito por [Luan](https://github.com/LuanCHR), estudante procurando estágio em TI.
