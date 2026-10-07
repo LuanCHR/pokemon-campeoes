@@ -641,6 +641,7 @@ function aba(n) {
     $('#' + k + '-secao').hidden = k !== n;
     document.querySelector(`[data-aba=${k}]`).setAttribute('aria-selected', k === n);
   });
+  try { const b = document.querySelector(`[data-aba=${n}]`), r = b.parentElement; r.scrollTo({ left: b.offsetLeft - (r.clientWidth - b.offsetWidth) / 2, behavior: 'smooth' }); } catch (e) {}
   if (n === 'times' && D && D.jogos.length) palco(atual);
   if (n === 'seguindo') listarSeguindo();
   if (n === 'estatisticas') graficos();

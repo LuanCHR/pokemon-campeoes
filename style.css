@@ -503,3 +503,15 @@ body{background:linear-gradient(180deg,#0a2a63 0,#061a3d 460px,#04122e 100%) no-
 .top3{background:radial-gradient(ellipse 70% 80% at 50% 100%,#1b4a9a30,transparent 75%);border-radius:18px;padding:10px 0 0}
 .pod img{filter:none}
 .time .membro.mvp{padding-top:46px}
+
+/* mobile: nada pode ser mais largo que a tela */
+html,body{max-width:100%;overflow-x:clip}
+.abas{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.abas::-webkit-scrollbar{display:none}
+.abas button{white-space:nowrap;flex:0 0 auto}
+@media(max-width:560px){
+  .topo{padding:24px 14px 8px}
+  .abas button{padding:10px 12px;font-size:14px}
+  .conq{gap:6px}
+  .cab,.conq,.stats{min-width:0}
+}
